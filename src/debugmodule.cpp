@@ -23,10 +23,10 @@ void debugmodule::update(bot_info* data){
 	for(std::vector<event*>::iterator it = evtQueue.begin();it != evtQueue.end();it++){
 		event* evt = *it;
 		if(evt->m_eventflag==RESPONSE_EVENT_FLAG &&
-			(evt->m_response.m_responseid==RESPONSE_ACK || 
-			evt->m_response.m_responseid ==RESPONSE_BUSY ||
-			evt->m_response.m_responseid ==RESPONSE_SUCCESS ||
-			evt->m_response.m_responseid ==RESPONSE_FAILURE)){
+			(evt->m_response.m_responseflag==RESPONSE_ACK || 
+			evt->m_response.m_responseflag ==RESPONSE_BUSY ||
+			evt->m_response.m_responseflag ==RESPONSE_SUCCESS ||
+			evt->m_response.m_responseflag ==RESPONSE_FAILURE)){
 			processResponse(evt);
 		}
 	}
@@ -58,9 +58,9 @@ void debugmodule::processResponse(event* evt){
 	
 	for(std::multimap<uint32,query_event_info*>::iterator it = pair.first; it!=pair.second;it++){
 		query_event_info* nfo = it->second;
-		if(nfo->eventID == evt->m_response.m_query_event_id){
+		if(nfo->eventID == evt->m_response.m_query_eventid){
 			//response to our event yay
-			if(evt->m_response.m_responseid== RESPONSE_ACK){
+			if(evt->m_response.m_responseflag== RESPONSE_ACK){
 				nfo->acked=true;
 			}
 			else{
@@ -89,7 +89,7 @@ void debugmodule::addEvent(event* evt){
 		*m_output << myName << ": seems like some modules are taking too long to respond. Query has been dropped."<<std::endl;
 		return;
 	}	
-	m_qe_space[m_events_len]->queryID=evt->m_query.m_queryid;
+	m_qe_space[m_events_len]->queryID=evt->m_query.m_queryflag;
 	m_qe_space[m_events_len]->eventID=evt->m_eventid;
 	m_qe_space[m_events_len]->timer=m_timer;
 	m_qe_space[m_events_len]->senderModuleId=evt->m_moduleid;

@@ -11,7 +11,7 @@ class event{
 		m_eventflag=0;
 		m_timestamp=getMicros();
 		m_moduleid=moduleid;
-		m_query.m_queryid=m_query.m_moduleid=0;
+		m_query.m_queryflag=m_query.m_moduleid=0;
 		m_query.m_querydata=(void*)0;
 	}
 	public:
@@ -21,15 +21,15 @@ class event{
 	uint32 m_moduleid;
 	union{
 		struct{
-			uint32	m_queryid;
+			uint32	m_queryflag;
 			uint32	m_moduleid;
 			void* 	m_querydata;
 		}m_query;
 		struct{
-			uint32 	m_responseid;
+			uint32 	m_responseflag;
 			uint32 	m_moduleid;
-			uint32 	m_query_id;
-			uint32	m_query_event_id;
+			uint32 	m_queryflag;
+			uint32	m_query_eventid;
 			void*	m_responsedata;
 		}m_response;
 		struct{

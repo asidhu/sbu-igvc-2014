@@ -4,6 +4,8 @@
 *.o
 *.swp
 robot
+.project
+.cproject
 # Compiled Dynamic libraries
 *.so
 *.dylib
