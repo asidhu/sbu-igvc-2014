@@ -1,0 +1,4 @@
+include Makefile
+
+objects: $(OBJECTS)
+
