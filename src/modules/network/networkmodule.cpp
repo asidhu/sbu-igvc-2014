@@ -22,10 +22,14 @@
 	}
 
 	void* networkmodule::threadclient(void* mod){
-		struct cli_handlerinfo* nfo = (struct cli_handlerinfo*)mod;
+		cli_handlerinfo* nfo = (cli_handlerinfo *)mod;
 		nfo->module->clienthandle(nfo->clisock);
-		delete cli_handlerinfo;
+		delete nfo;
 		return NULL;
+	}
+
+	void networkmodule::clienthandle(int sock){
+
 	}
 	void networkmodule::serverlisten(){
 		int serversockfd, clisockfd, portno;
@@ -53,7 +57,7 @@
 				openSockFailure("Error accepting client socket!");
 				return;
 			}
-			struct cli_handlerinfo* data = malloc(sizeof(struct cli_handlerinfo));	
+			cli_handlerinfo* data = (cli_handlerinfo*)malloc(sizeof(cli_handlerinfo));	
 			data->module=this;
 			data->clisock = clisockfd;
 			spawnThread(networkmodule::threadclient, data);

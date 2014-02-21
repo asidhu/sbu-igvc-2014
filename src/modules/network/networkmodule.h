@@ -5,7 +5,9 @@ class networkmodule:public module{
 	private:
 	static const char* myName;
 	public:
-	static void* thread(void* mod);
+	static void* threadserver(void* mod);
+	static void* threadclient(void* cli_info);
+	void clienthandle(int sock);
 	void serverlisten();
 	void initialize(uint32&);
 	void update(bot_info*);
