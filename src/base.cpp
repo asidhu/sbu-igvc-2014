@@ -1,6 +1,8 @@
 #include "base.h"
 #include "event.h"
-#include "samplemodule.h"
+#include "samplemodule.h"//shouldnt be here
+//#include "modules/gui/qt/GUIModule.h"
+#include "modules/network/networkmodule.h"
 #include "event_flag.h"
 #include "debugmodule.h"
 #include "stdio.h"
@@ -13,7 +15,9 @@ int main(int argc, char** argv){
 
 void bot::initialize(){
 	//load all modules.
-	m_modules.push_back(new samplemodule());	
+	//m_modules.push_back(new GUIModule());
+	m_modules.push_back(new samplemodule());
+	m_modules.push_back(new networkmodule());
 	m_modules.push_back(new debugmodule(&std::cout));	
 	
 	uint32 count=0;
