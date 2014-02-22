@@ -3,6 +3,6 @@
 
 int spawnThread( void*(*threaded)(void *), void * arg);
 int openSerialPort( const char* serialport, int speed, int parity, int blocking);
-
+void sleepms(int ms);
 
 #endif

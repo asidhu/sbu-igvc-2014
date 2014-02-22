@@ -7,7 +7,9 @@
 #include <pthread.h>
 
 
-
+void sleepms(int ms){
+	usleep(ms*1000);
+}
 
 int spawnThread( void*(*threaded)(void*), void * arg){
 	pthread_t thread;

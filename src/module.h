@@ -17,6 +17,7 @@ protected:
 	event* sendResponse(event* query, uint32 responseid, void* data);
 
 public:
+	module():m_myEvents(){}
 	void setID(uint32 id){	m_moduleid=id;	}
 	uint32 getID(){	return m_moduleid;	}
 	virtual void initialize(uint32&)=0;

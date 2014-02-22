@@ -4,6 +4,7 @@
 #include "module.h"
 #include "basetypes.h"
 #define MAX_LISTENER_LISTS 512
+#define SLEEP_TIME 20
 class bot{
 	private:
 	std::vector<module*> m_modules;
