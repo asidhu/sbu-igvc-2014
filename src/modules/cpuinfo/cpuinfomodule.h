@@ -3,32 +3,46 @@
 #include "module.h"
 #define MAX_CORES 64
 #define MAX_VALUES 32
+#define MAX_NET_INTERFACES 16
+#define CPU_INFO_SLEEP 2000
 class cpuinfomodule:public module{
 	private:
 	static const char* myName;
 	public:
 	int m_cpus;
 	int m_statfd;
+	int m_meminfofd;
+	int m_netfd;
+	double m_cpuUsage[MAX_CORES+1];
+	double m_memUsage;
 	void initialize(uint32&);
 	void update(bot_info*);
 	void pushEvent(event* );
 	void readCPU();
+	void readMEM();
+	void readNET();
+	int convertMultiplier(char* tmp);
 	void initializeCPUReader();
 	static void* thread(void* arg);
 	const char* getCommonName(){
 		return myName;
 	}
 	union{
-		int jiffies[MAX_VALUES];
+		long jiffies[MAX_VALUES];
 		struct{
-			int user,nice,system,idle,iowait,irq,softirq;
+			long user,nice,system,idle,iowait,irq,softirq;
 		};
 	}cpudata[MAX_CORES+1];
-	double m_cpuUsage[MAX_CORES+1];
-	int calculateWork(int core){
+	struct{
+		long txByte,rxByte;
+		double txkbps, rxkbps;
+		char name[64];
+	} netdata[MAX_NET_INTERFACES];
+	long txBytes[MAX_NET_INTERFACES], rxBytes[MAX_NET_INTERFACES];
+	long calculateWork(int core){
 		return cpudata[core].user+cpudata[core].nice+cpudata[core].system;
 	}
-	int calculateTotal(int core){
+	long calculateTotal(int core){
 		int total=0;
 		for(int i=0;i<7;i++)
 			total+= cpudata[core].jiffies[i];

@@ -17,37 +17,91 @@
 		if(numBytes<=0)return;
 		buffer[numBytes]=0;
 		int currCPU=0;
-		int len;
 		long total =0, working=0;
 		total = calculateTotal(currCPU);
 		working = calculateWork(currCPU);
-		sscanf(buffer,"cpu %d %d %d %d %d %d %d",cpudata[currCPU].jiffies, cpudata[currCPU].jiffies+1,
+		sscanf(buffer,"cpu %ld %ld %ld %ld %ld %ld %ld",cpudata[currCPU].jiffies, cpudata[currCPU].jiffies+1,
 				cpudata[currCPU].jiffies+2,cpudata[currCPU].jiffies+3,cpudata[currCPU].jiffies+4,
 				cpudata[currCPU].jiffies+5,cpudata[currCPU].jiffies+6);	
 		total= calculateTotal(currCPU)-total;
 		working = calculateWork(currCPU)-working;
 		m_cpuUsage[currCPU] = (((double)working)/total)*100;
-		std::cout<<"Working "<<working<<"total "<<total<<" CPU Usage:"<< m_cpuUsage[currCPU]<< std::endl;
 		char* loc = (char*)strchr(buffer,'\n')+1;
 		currCPU++;
 		total = calculateTotal(currCPU);
 		working = calculateWork(currCPU);
 		int tst;
-		while((tst=sscanf(loc,"cpu%*d %d %d %d %d %d %d %d",cpudata[currCPU].jiffies, cpudata[currCPU].jiffies+1,
+		while((tst=sscanf(loc,"cpu%*d %ld %ld %ld %ld %ld %ld %ld",cpudata[currCPU].jiffies, cpudata[currCPU].jiffies+1,
 				cpudata[currCPU].jiffies+2,cpudata[currCPU].jiffies+3,cpudata[currCPU].jiffies+4,
-				cpudata[currCPU].jiffies+5,cpudata[currCPU].jiffies+6))!=EOF && tst!=0 && currCPU<MAX_CORES){
+				cpudata[currCPU].jiffies+5,cpudata[currCPU].jiffies+6))!=EOF && tst!=0){
 			total= calculateTotal(currCPU)-total;
 			working = calculateWork(currCPU)-working;
 			
 			loc = (char*)strchr(loc,'\n')+1;
 			m_cpuUsage[currCPU] = (((double)working)/total)*100;
-			std::cout<<"Working "<<working<<"total "<<total<<" CPU Usage:"<< m_cpuUsage[currCPU]<< std::endl;
 			currCPU++;
+			if(currCPU>=MAX_CORES)break;
 			total = calculateTotal(currCPU);
 			working = calculateWork(currCPU);
 		}
+		m_cpus=currCPU;	
 		
-		
+	}
+	int cpuinfomodule::convertMultiplier(char* tmp){
+		if(tmp[0]=='B')
+			return 1;//oh well?
+		else if(tmp[0]=='k')
+			return 1024;
+		else if(tmp[0]=='m')
+			return 1024*1024;
+		else if(tmp[0]=='g')
+			return 1024*1024*1024;
+		else if(tmp[0]=='t')
+			return 1024*1024*1024*1024;
+		return 1;
+	}
+	void cpuinfomodule::readMEM(){
+		lseek(m_meminfofd,0,SEEK_SET);
+		char buffer[1024];
+		int nBytes = read(m_meminfofd,buffer,1024);
+		if(nBytes<=0)return;
+		buffer[nBytes]=0;
+		long total, free;
+		char tmp[64];
+		sscanf(buffer,"%*s %li %s\n",&total,&tmp);
+		total*= convertMultiplier(tmp);		
+		char* loc = (char*)strchr(buffer,'\n')+1;
+		sscanf(loc,"%*s %li %s\n",&free,&tmp);
+		free*= convertMultiplier(tmp);		
+		m_memUsage = (1-(double)free/total)*100;
+		std::cout<< "Mem usage:" << m_memUsage<<" free:"<<free<< " total:"<<total<<std::endl;
+
+	}
+
+	void cpuinfomodule::readNET(){
+		lseek(m_netfd,0,SEEK_SET);
+		char buffer[1024];
+		int nBytes = read(m_netfd,buffer,1024);
+		if(nBytes<=0)return;
+		buffer[nBytes]=0;
+		long newTx, newRx;
+		char* loc = (char*)strchr(buffer,'\n'); //read header
+		loc = (char*)strchr(loc+1,'\n'); //read header
+		int numinterfaces=0;
+		while(loc!=NULL){
+			int match =sscanf(loc+1, "%63s %ld %*ld %*ld %*ld %*ld %*ld %*ld %*ld %ld",netdata[numinterfaces].name,
+				&(newRx),&(newTx));
+			if(match<3)break;
+			double bandTx = newTx - netdata[numinterfaces].txByte,bandRx= newRx - netdata[numinterfaces].rxByte;
+			netdata[numinterfaces].txkbps = bandTx/1024 /(CPU_INFO_SLEEP/1000);
+			netdata[numinterfaces].rxkbps = bandRx/1024 /(CPU_INFO_SLEEP/1000);
+			netdata[numinterfaces].txByte=newTx;
+			netdata[numinterfaces].rxByte=newRx;
+			std::cout <<"interface:"<<netdata[numinterfaces].name<< " TX:"<< netdata[numinterfaces].txkbps
+				<< " RX:"<< netdata[numinterfaces].rxkbps<<std::endl;
+			loc = (char*)strchr(loc+1,'\n'); //skip line
+			numinterfaces++;
+		}
 	}
 
 	void* cpuinfomodule::thread(void* args){
@@ -55,12 +109,16 @@
 		while(true){
 			sleepms(2000);
 			module->readCPU();
+			module->readMEM();
+			module->readNET();
 		}			
 	}
 
 	void cpuinfomodule::initializeCPUReader(){
-		m_statfd = open("/proc/stat",O_RDONLY);
 		spawnThread(cpuinfomodule::thread, this);
+		m_statfd = open("/proc/stat",O_RDONLY);
+		m_meminfofd = open("/proc/meminfo",O_RDONLY);
+		m_netfd = open("/proc/net/dev",O_RDONLY);
 	}
 	/**
 		rules of module ettiquette:
