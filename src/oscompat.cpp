@@ -1,7 +1,6 @@
-#include "event.h"
+
 #include "oscompat.h"
 
-uint64 event::m_event_counter=0;
 
 uint64 getMicros()
 {

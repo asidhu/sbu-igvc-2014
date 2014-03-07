@@ -12,9 +12,7 @@ private:
 protected:
 	uint32 m_moduleid;
 	void processEvent(event* e);
-	event* sendQuery(uint32 target, uint32 queryid, void* data);
-	event* sendEvent(uint32 evtFlag, void* data);
-	event* sendResponse(event* query, uint32 responseid, void* data);
+	event* makeEvent(uint32 evtFlag, void* data);
 
 public:
 	module():m_myEvents(){}
@@ -25,8 +23,6 @@ public:
 	virtual void pushEvent(event*)=0;
 	virtual const char* getCommonName()=0;
 	virtual void handleCommand(uint32 cmdflag, void* cmddata){}
-	virtual void handleQuery(uint32 queryid, void* querydata, event* e){}
-	virtual void handleResponse(uint32 queryid, uint32 responseid, void* respdata){}
 	virtual void handleEvent(uint32 evtflag, uint32 moduleid, void* evtdata){}
 	void recycleEvents();
 };

@@ -3,6 +3,7 @@
 #include "basetypes.h"
 #include "oscompat.h"
 #include "module.h"
+#include <iostream>
 class event{
 	private:
 	static uint64 m_event_counter;
@@ -11,40 +12,19 @@ class event{
 		m_eventflag=0;
 		m_timestamp=getMicros();
 		m_moduleid=moduleid;
-		m_query.m_queryflag=m_query.m_moduleid=0;
-		m_query.m_querydata=(void*)0;
+		m_data=(void*)0;
+		m_print=NULL;
 	}
 	public:
 	uint64 m_timestamp;
 	uint32 m_eventid;
 	uint32 m_eventflag;
 	uint32 m_moduleid;
-	union{
-		struct{
-			uint32	m_queryflag;
-			uint32	m_moduleid;
-			void* 	m_querydata;
-		}m_query;
-		struct{
-			uint32 	m_responseflag;
-			uint32 	m_moduleid;
-			uint32 	m_queryflag;
-			uint32	m_query_eventid;
-			void*	m_responsedata;
-		}m_response;
-		struct{
-			uint32 	m_unused;
-			uint32 	m_unused2;
-			void*	m_cmdData;
-
-		}m_command;
-		struct{
-			uint32 	m_unused;
-			uint32	m_unused2;
-			void*	m_data;
-		}m_generic;
-	};
+	void* m_data;
+	void (*m_print)(std::ostream& out, const event* evt);
 	friend class module;
 };
+std::ostream& operator<<(std::ostream& out, const event* mc);
+
 
 #endif

@@ -2,6 +2,7 @@
 #include "event.h"
 #include "base.h"
 #include "osutils.h"
+#include "event_flag.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -11,6 +12,7 @@
 #include <string.h>
 	void cpuinfomodule::readCPU(){
 		//m_statfd = open("/proc/stat",O_RDONLY);
+		cpuinfodata* d = & m_cpudata;
 		lseek(m_statfd,0,SEEK_SET);
 		char buffer[1024];
 		int numBytes=read(m_statfd,buffer,1024);
@@ -20,34 +22,34 @@
 		long total =0, working=0;
 		total = calculateTotal(currCPU);
 		working = calculateWork(currCPU);
-		sscanf(buffer,"cpu %ld %ld %ld %ld %ld %ld %ld",cpudata[currCPU].jiffies, cpudata[currCPU].jiffies+1,
-				cpudata[currCPU].jiffies+2,cpudata[currCPU].jiffies+3,cpudata[currCPU].jiffies+4,
-				cpudata[currCPU].jiffies+5,cpudata[currCPU].jiffies+6);	
+		sscanf(buffer,"cpu %ld %ld %ld %ld %ld %ld %ld",d->cpudata[currCPU].jiffies, d->cpudata[currCPU].jiffies+1,
+				d->cpudata[currCPU].jiffies+2, d->cpudata[currCPU].jiffies+3, d->cpudata[currCPU].jiffies+4,
+				d->cpudata[currCPU].jiffies+5, d->cpudata[currCPU].jiffies+6);	
 		total= calculateTotal(currCPU)-total;
 		working = calculateWork(currCPU)-working;
-		m_cpuUsage[currCPU] = (((double)working)/total)*100;
+		d->m_cpuUsage[currCPU] = (((double)working)/total)*100;
 		char* loc = (char*)strchr(buffer,'\n')+1;
 		currCPU++;
 		total = calculateTotal(currCPU);
 		working = calculateWork(currCPU);
 		int tst;
-		while((tst=sscanf(loc,"cpu%*d %ld %ld %ld %ld %ld %ld %ld",cpudata[currCPU].jiffies, cpudata[currCPU].jiffies+1,
-				cpudata[currCPU].jiffies+2,cpudata[currCPU].jiffies+3,cpudata[currCPU].jiffies+4,
-				cpudata[currCPU].jiffies+5,cpudata[currCPU].jiffies+6))!=EOF && tst!=0){
+		while((tst=sscanf(loc,"cpu%*d %ld %ld %ld %ld %ld %ld %ld",d->cpudata[currCPU].jiffies, d->cpudata[currCPU].jiffies+1,
+				d->cpudata[currCPU].jiffies+2,d->cpudata[currCPU].jiffies+3,d->cpudata[currCPU].jiffies+4,
+				d->cpudata[currCPU].jiffies+5,d->cpudata[currCPU].jiffies+6))!=EOF && tst!=0){
 			total= calculateTotal(currCPU)-total;
 			working = calculateWork(currCPU)-working;
 			
 			loc = (char*)strchr(loc,'\n')+1;
-			m_cpuUsage[currCPU] = (((double)working)/total)*100;
+			d->m_cpuUsage[currCPU] = (((double)working)/total)*100;
 			currCPU++;
-			if(currCPU>=MAX_CORES)break;
+			if(currCPU>=_CPUINFO_MAX_CORES)break;
 			total = calculateTotal(currCPU);
 			working = calculateWork(currCPU);
 		}
-		m_cpus=currCPU;	
+		d->m_cpus=currCPU;	
 		
 	}
-	int cpuinfomodule::convertMultiplier(char* tmp){
+	long cpuinfomodule::convertMultiplier(char* tmp){
 		if(tmp[0]=='B')
 			return 1;//oh well?
 		else if(tmp[0]=='k')
@@ -57,7 +59,7 @@
 		else if(tmp[0]=='g')
 			return 1024*1024*1024;
 		else if(tmp[0]=='t')
-			return 1024*1024*1024*1024;
+			return 1024L*1024L*1024L*1024L;
 		return 1;
 	}
 	void cpuinfomodule::readMEM(){
@@ -68,13 +70,12 @@
 		buffer[nBytes]=0;
 		long total, free;
 		char tmp[64];
-		sscanf(buffer,"%*s %li %s\n",&total,&tmp);
+		sscanf(buffer,"%*s %li %63s\n",&total,(char*)&tmp);
 		total*= convertMultiplier(tmp);		
 		char* loc = (char*)strchr(buffer,'\n')+1;
-		sscanf(loc,"%*s %li %s\n",&free,&tmp);
+		sscanf(loc,"%*s %li %63s\n",&free,(char*)&tmp);
 		free*= convertMultiplier(tmp);		
-		m_memUsage = (1-(double)free/total)*100;
-		std::cout<< "Mem usage:" << m_memUsage<<" free:"<<free<< " total:"<<total<<std::endl;
+		m_cpudata.m_memUsage = (1-(double)free/total)*100;
 
 	}
 
@@ -89,29 +90,30 @@
 		loc = (char*)strchr(loc+1,'\n'); //read header
 		int numinterfaces=0;
 		while(loc!=NULL){
-			int match =sscanf(loc+1, "%63s %ld %*ld %*ld %*ld %*ld %*ld %*ld %*ld %ld",netdata[numinterfaces].name,
+			int match =sscanf(loc+1, "%63s %ld %*d %*d %*d %*d %*d %*d %*d %ld",m_cpudata.netdata[numinterfaces].name,
 				&(newRx),&(newTx));
 			if(match<3)break;
-			double bandTx = newTx - netdata[numinterfaces].txByte,bandRx= newRx - netdata[numinterfaces].rxByte;
-			netdata[numinterfaces].txkbps = bandTx/1024 /(CPU_INFO_SLEEP/1000);
-			netdata[numinterfaces].rxkbps = bandRx/1024 /(CPU_INFO_SLEEP/1000);
-			netdata[numinterfaces].txByte=newTx;
-			netdata[numinterfaces].rxByte=newRx;
-			std::cout <<"interface:"<<netdata[numinterfaces].name<< " TX:"<< netdata[numinterfaces].txkbps
-				<< " RX:"<< netdata[numinterfaces].rxkbps<<std::endl;
+			double bandTx = newTx - m_cpudata.netdata[numinterfaces].txByte,bandRx= newRx - m_cpudata.netdata[numinterfaces].rxByte;
+			m_cpudata.netdata[numinterfaces].txkbps = bandTx/1024 /(this->m_refreshrate/1000);
+			m_cpudata.netdata[numinterfaces].rxkbps = bandRx/1024 /(this->m_refreshrate/1000);
+			m_cpudata.netdata[numinterfaces].txByte=newTx;
+			m_cpudata.netdata[numinterfaces].rxByte=newRx;
 			loc = (char*)strchr(loc+1,'\n'); //skip line
 			numinterfaces++;
 		}
+		m_cpudata.m_interfaces=numinterfaces;
 	}
 
 	void* cpuinfomodule::thread(void* args){
 		cpuinfomodule* module = (cpuinfomodule*) args;
 		while(true){
-			sleepms(2000);
+			sleepms(module->m_refreshrate);
 			module->readCPU();
 			module->readMEM();
 			module->readNET();
-		}			
+			module->m_dataArrived=true;
+		}
+		return NULL;			
 	}
 
 	void cpuinfomodule::initializeCPUReader(){
@@ -119,6 +121,7 @@
 		m_statfd = open("/proc/stat",O_RDONLY);
 		m_meminfofd = open("/proc/meminfo",O_RDONLY);
 		m_netfd = open("/proc/net/dev",O_RDONLY);
+		m_dataArrived=false;
 	}
 	/**
 		rules of module ettiquette:
@@ -138,7 +141,26 @@
 		initializeCPUReader();
 	}
 
+	void cpuinfomodule::printEvent(std::ostream& out, const event* evt){
+		cpuinfodata* cpu = (cpuinfodata*)(evt->m_data);
+		out<< "cpuinfo:CPU:"<<cpu->m_cpus<<std::endl;
+		for(int i=0;i<cpu->m_cpus;i++){
+			if(i)
+				out<<"C"<<i<<":";
+			else
+				out<<"Total:";
+			out<<cpu->m_cpuUsage[i]<<"%"<<std::endl;
+		}
+		out<< "cpuinfo:MEM:"<<cpu->m_memUsage<<"%"<<std::endl;
 
+
+		out<<"cpuinfo:NET: "<<cpu->m_interfaces<<std::endl;
+		for(int i=0;i<cpu->m_interfaces;i++){
+			out<< cpu->netdata[i].name<<":";
+			out<<"TX:"<<cpu->netdata[i].txkbps<<"kbps ";
+			out<<"RX:"<<cpu->netdata[i].rxkbps<<"kbps"<<std::endl;
+		}
+	}
 	/**
 		Rules:
 		1) DO NOT BLOCK. NO IO, NO SLEEP, NO WAITING. DO NOT PERFORM INTENSIVE CALCULATIONS HERE.
@@ -146,6 +168,12 @@
 		3) clean up any data from your previously published events (event objects are deleted after they are pushed be careful about that).
 	**/
 	void cpuinfomodule::update(bot_info* data){
+		if(m_dataArrived){
+			event* evt = this->makeEvent(EFLAG_CPUDATA,&m_cpudata);
+			evt->m_print= cpuinfomodule::printEvent;
+			data->m_eventQueue.push_back(evt);
+			m_dataArrived=false;
+		}
 	}
 	/**
 		Rules:

@@ -16,8 +16,8 @@ int main(int argc, char** argv){
 
 void bot::initialize(){
 	//load all modules.
+	m_modules.push_back(new samplemodule());
 	m_modules.push_back(new cpuinfomodule());
-	//m_modules.push_back(new samplemodule());
 	m_modules.push_back(new networkmodule());
 	m_modules.push_back(new debugmodule(&std::cout));	
 	
@@ -54,13 +54,8 @@ void bot::addListener(module* m, uint32 flag){
 
 void bot::dispatchEvent(event* evt){
 	uint32 byteone = evt->m_eventflag & 0xF000000;
-	if(byteone==TERMINATE_EVENT_FLAG){
+	if(byteone==EFLAG_TERMINATE){
 		dispatchToList(m_modules,evt);
-	}
-	else if(byteone==QUERY_EVENT_FLAG|| byteone == RESPONSE_EVENT_FLAG){
-		uint32 target = (byteone==QUERY_EVENT_FLAG)?evt->m_query.m_moduleid:evt->m_response.m_moduleid;
-		if(target<m_modules.size())
-			m_modules[target]->pushEvent(evt);
 	}
 	else{
 		for(uint32 i=0;i< m_module_listeners_count;i++){
@@ -89,6 +84,7 @@ void bot::mainLoop(){
 		for(std::vector<module*>::iterator it = m_modules.begin(); it!=m_modules.end();it++){
 			module* m = *it;
 			uint64 duration = getMicros();
+			moduleInfo.m_currentTime=duration;
 			m->update(&moduleInfo);
 			moduleInfo.m_moduleTimer[counter]=getMicros()-duration;
 			counter++;

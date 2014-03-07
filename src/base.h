@@ -31,6 +31,7 @@ struct bot_info{
 	std::vector<module*>* m_modules;
 	uint32* m_moduleTimer;
 	uint32 m_moduleTimerLen;
+	uint32 m_currentTime;
 };
 
 #endif

@@ -17,31 +17,16 @@
 
 
 class event;
-class query_event_info{
-public:
-	bool acked;
-	uint32 queryID;
-	uint32 eventID;
-	uint32 senderModuleId;
-	uint32 timer;
-	uint32 receiverModuleId;
-};
+
 class debugmodule:public module{
 private:
 	static const char*  myName;
 	uint32 m_events_len;
 	uint64 m_timer;
-	query_event_info* m_qe_space[MAX_QUERY_TRACKER];
-	std::multimap<uint32, query_event_info*> m_events;
-	void addEvent(event*);
-	void recycleInfo(query_event_info*);
-	void processResponse(event*);
 public:
 	std::ostream *m_output;
 	debugmodule(std::ostream* os){
 		m_output=os;
-		for(uint32 i=0;i<MAX_QUERY_TRACKER;i++)
-			m_qe_space[i] = new query_event_info();
 		m_events_len=0;
 		m_timer=0;
 	}

@@ -1,53 +1,54 @@
 #ifndef _CPUINFO_MODULE_H
 #define _CPUINFO_MODULE_H
 #include "module.h"
-#define MAX_CORES 64
-#define MAX_VALUES 32
-#define MAX_NET_INTERFACES 16
-#define CPU_INFO_SLEEP 2000
+#include "modules/cpuinfo/cpuinfodata.h"
+#include <iostream>
+
+
+#define CPU_DEFAULT_REFRESHRATE 2000
+
+
+
 class cpuinfomodule:public module{
-	private:
+private:
 	static const char* myName;
-	public:
-	int m_cpus;
+	static void* thread(void* arg);
+	static void printEvent(std::ostream&, const event*);
+	volatile bool m_dataArrived;
+	struct cpuinfodata m_cpudata;
 	int m_statfd;
 	int m_meminfofd;
 	int m_netfd;
-	double m_cpuUsage[MAX_CORES+1];
-	double m_memUsage;
-	void initialize(uint32&);
-	void update(bot_info*);
-	void pushEvent(event* );
+	long convertMultiplier(char* tmp);
 	void readCPU();
 	void readMEM();
 	void readNET();
-	int convertMultiplier(char* tmp);
 	void initializeCPUReader();
-	static void* thread(void* arg);
-	const char* getCommonName(){
-		return myName;
-	}
-	union{
-		long jiffies[MAX_VALUES];
-		struct{
-			long user,nice,system,idle,iowait,irq,softirq;
-		};
-	}cpudata[MAX_CORES+1];
-	struct{
-		long txByte,rxByte;
-		double txkbps, rxkbps;
-		char name[64];
-	} netdata[MAX_NET_INTERFACES];
-	long txBytes[MAX_NET_INTERFACES], rxBytes[MAX_NET_INTERFACES];
+
 	long calculateWork(int core){
-		return cpudata[core].user+cpudata[core].nice+cpudata[core].system;
+		return m_cpudata.cpudata[core].user+m_cpudata.cpudata[core].nice+m_cpudata.cpudata[core].system;
 	}
+
 	long calculateTotal(int core){
 		int total=0;
 		for(int i=0;i<7;i++)
-			total+= cpudata[core].jiffies[i];
+			total+= m_cpudata.cpudata[core].jiffies[i];
 		return total;
 	}
+public:
+	int m_refreshrate;
+	void initialize(uint32&);
+	void update(bot_info*);
+	void pushEvent(event* );
+	const char* getCommonName(){
+		return myName;
+	}
+	cpuinfomodule(){
+		this->m_refreshrate=CPU_DEFAULT_REFRESHRATE;
+		m_dataArrived=false;
+		m_cpudata.m_cpus= m_cpudata.m_interfaces=0;
+	}
+
 };
 
 
