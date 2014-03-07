@@ -13,4 +13,7 @@
 #define EFLAG_CPUDATA		0x01000000
 
 
+//GPS Module Flags
+#define EFLAG_GPSDATA		0x00100000
+#define EFLAG_GPSRAW		0x00200000
 #endif
