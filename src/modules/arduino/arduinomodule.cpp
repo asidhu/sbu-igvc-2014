@@ -9,18 +9,46 @@
 #include <unistd.h>
 #include <iostream>
 #include <stdio.h>
-#include <string.h>
-
+#include <cstring>
 	void* arduinomodule::thread(void* args){
 		arduinomodule* module = (arduinomodule*) args;
+		
 		while(true){
 			//block until data is read from arduino
-			module->m_dataArrived=true;
+			module->readArduino();
+			//module->m_dataArrived=true;
 		}
 		return NULL;			
 	}
 
+	void arduinomodule::readArduino(){
+		const int buffsize=4096;
+		char buffer[buffsize];
+		int size=0, incoming;
+		char nlChar = '\n';
+		while(true){
+			incoming = read(m_device,buffer+size,buffsize-size);
+			if(incoming==-1){
+				sleepms(10);
+				continue;
+			}
+			size+=incoming;
+			for(int i=0;i<size;i++){
+				if(buffer[i] == nlChar ){
+					//lets construct an event and push it out.
+					arduinodata* data = getArduinoData();
+					memcpy(data->data,buffer,i);
+					data->numChar = i;
+					m_events.push_back(data);
+					memcpy(buffer,buffer+i+1,size-i-1);
+					size-=i+1;
+				}
+			}
+		}
+	}
+
 	void arduinomodule::initializeReader(){
+		m_device = openSerialPort("/dev/ttyACM0",115200,0,0);
 		spawnThread(arduinomodule::thread, this);
 		m_dataArrived=false;
 	}
@@ -44,7 +72,8 @@
 
 	void arduinomodule::printEvent(std::ostream& out, const event* evt){
 		arduinodata* data = (arduinodata*)(evt->m_data);
-		out<< "arduino:"<<std::endl;
+		data->data[data->numChar]=0;
+		out<< "arduino:"<<data->data<<std::endl;
 	}
 	/**
 		Rules:
@@ -53,11 +82,17 @@
 		3) clean up any data from your previously published events (event objects are deleted after they are pushed be careful about that).
 	**/
 	void arduinomodule::update(bot_info* data){
-		if(m_dataArrived){
-			event* evt = this->makeEvent(m_data.eflag,&m_data);
+		while(!m_sent_events.empty()){
+			m_recycler.push_back(m_sent_events.back());
+			m_sent_events.pop_back();
+		}
+		while(!m_events.empty()){
+			arduinodata* dataline = m_events.back();
+			m_events.pop_back();
+			event* evt = this->makeEvent(1,dataline);
 			evt->m_print= arduinomodule::printEvent;
 			data->m_eventQueue.push_back(evt);
-			m_dataArrived=false;
+			m_sent_events.push_back(dataline);
 		}
 	}
 	/**

@@ -3,7 +3,7 @@
 #include "module.h"
 #include "modules/arduino/arduinodata.h"
 #include <iostream>
-
+#include <vector>
 
 
 
@@ -15,7 +15,19 @@ private:
 	static void printEvent(std::ostream&, const event*);
 	volatile bool m_dataArrived;
 	void initializeReader();
-	arduinodata m_data;
+	void readArduino();
+	int m_device;
+	std::vector<arduinodata*> m_events, m_sent_events, m_recycler;
+
+	arduinodata* getArduinoData(){
+		if(m_recycler.empty())
+			return new arduinodata();
+		else{
+			arduinodata* out = m_recycler.back();
+			m_recycler.pop_back();
+			return out;
+		}
+	}	
 public:
 	void initialize(uint32&);
 	void update(bot_info*);
