@@ -3,6 +3,9 @@
 #include "samplemodule.h"//shouldnt be here
 #include "modules/cpuinfo/cpuinfomodule.h"
 #include "modules/network/networkmodule.h"
+#ifdef USE_CV
+	#include "modules/camera/cameramodule.h"
+#endif
 #include "modules/arduino/arduinomodule.h"
 #include "osutils.h"
 #include "event_flag.h"
@@ -18,9 +21,12 @@ int main(int argc, char** argv){
 void bot::initialize(){
 	//load all modules.
 	//m_modules.push_back(new samplemodule());
-	m_modules.push_back(new cpuinfomodule());
+	//m_modules.push_back(new cpuinfomodule());
 	//m_modules.push_back(new networkmodule());
 	m_modules.push_back(new arduinomodule());
+	#ifdef USE_CV
+	m_modules.push_back(new cameramodule());
+	#endif
 	m_modules.push_back(new debugmodule(&std::cout));	
 	
 	uint32 count=0;

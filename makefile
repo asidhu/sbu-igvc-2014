@@ -1,8 +1,8 @@
 CC=gcc
 MAKE= make
-CFLAGS=-lstdc++ -lpthread  -Wall -g
-INCLUDE=-Isrc/
-MODULES = cpuinfo network camera arduino
+CFLAGS:=-lstdc++ -lpthread  -Wall -g
+INCLUDE:=-Isrc/ $(shell pkg-config --cflags opencv)
+MODULES = cpuinfo network arduino
 
 CPUINFOCPP := $(wildcard src/modules/cpuinfo/*.cpp)
 CPUINFOOBJ := $(addprefix obj/,$(notdir $(CPUINFOCPP:.cpp=.o)))
@@ -30,10 +30,12 @@ LINK_FILES = obj/*.o
 
 OUTPUT_FILE = robot
 all: core compile_modules link
+cv: core compile_modules camera linkcv
+
 
 compile_modules: $(MODULES)
 
-obj/%.o: src/%.cpp $(CPUINFOCPP) $(NETWORKCPP) 
+obj/%.o: src/%.cpp 
 	$(CC) $(INCLUDE) $(CFLAGS) -c -o $@ $<
 
 core: $(OBJ_FILES)
@@ -43,6 +45,9 @@ compile:
 
 link:
 	$(CC) -o $(OUTPUT_FILE) $(LINK_FILES) $(CFLAGS)
+
+linkcv:
+	$(CC) -o $(OUTPUT_FILE) $(LINK_FILES) $(CFLAGS) $(shell pkg-config --libs opencv)
 clean:
 	-rm obj/*.o
 	-rm $(OUTPUT_FILE)

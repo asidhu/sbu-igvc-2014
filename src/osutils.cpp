@@ -81,6 +81,19 @@ void set_blocking (int fd, int should_block)
 
 
 int openSerialPort( const char* serialport, int speed, int parity, int blocking){
+	speed_t actualSpeed;
+	if(speed==9600)
+		actualSpeed= B9600;
+	else if(speed==19200)
+		actualSpeed= B19200;
+	else if(speed==38400)
+		actualSpeed= B38400;
+	else if(speed==57600)
+		actualSpeed= B57600;
+	else if(speed==115200)
+		actualSpeed=B115200;
+	else
+		actualSpeed=speed;	
 	int fd = open (serialport, O_RDWR | O_NOCTTY | O_SYNC);
 	if (fd < 0)
 	{
@@ -88,7 +101,7 @@ int openSerialPort( const char* serialport, int speed, int parity, int blocking)
 	        return -1;
 	}
 
-	set_interface_attribs (fd, speed, parity);  // set speed to 115,200 bps, 8n1 (no parity)
+	set_interface_attribs (fd, actualSpeed, parity);  // set speed to 115,200 bps, 8n1 (no parity)
 	set_blocking (fd, blocking);                // set no blocking
 	return fd;
 }
