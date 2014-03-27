@@ -1,5 +1,30 @@
 #include "Arduino.h"
 
+
+
+
+
+
+
+
+#define IMU_HEADING
+#define IMU_ACCEL
+#define IMU_YPR
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // SENSOR CALIBRATION
 /*****************************************************************/
 // How to calibrate? Read the tutorial at http://dev.qu.tu-berlin.de/projects/sf-razor-9dof-ahrs
@@ -854,7 +879,29 @@ void update(){
     Serial.print(tst[1]);Serial.print(",");
     Serial.print(tst[2]);Serial.println();
     */
-    Serial.println(MAG_Heading);
+    #ifdef IMU_HEADING
+      Serial.print("R,H,");
+      Serial.print(MAG_Heading);
+      Serial.print("\n");
+    #endif
+    #ifdef IMU_ACCEL
+      Serial.print("R,A,");
+      Serial.print(accel[0]);
+      Serial.print(",");
+      Serial.print(accel[1]);
+      Serial.print(",");
+      Serial.print(accel[2]);
+      Serial.print("\n");
+    #endif
+    #ifdef IMU_YPR
+      Serial.print("R,G,");
+      Serial.print(yaw);
+      Serial.print(",");
+      Serial.print(pitch);
+      Serial.print(",");
+      Serial.print(roll);
+      Serial.print("\n");
+    #endif
   }
 }
 

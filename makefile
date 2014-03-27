@@ -2,7 +2,7 @@ CC=gcc
 MAKE= make
 CFLAGS:=-lstdc++ -lpthread  -Wall -g
 INCLUDE:=-Isrc/ $(shell pkg-config --cflags opencv)
-MODULES = cpuinfo network arduino
+MODULES = cpuinfo network arduino imu
 
 CPUINFOCPP := $(wildcard src/modules/cpuinfo/*.cpp)
 CPUINFOOBJ := $(addprefix obj/,$(notdir $(CPUINFOCPP:.cpp=.o)))
@@ -23,6 +23,11 @@ ARDUINODIR := src/modules/arduino
 ARDUINOCPP := $(wildcard $(ARDUINODIR)/*.cpp)
 ARDUINOOBJ := $(addprefix obj/,$(notdir $(ARDUINOCPP:.cpp=.o)))
 ARDUINOPAT := $(ARDUINODIR)/%.cpp
+
+IMUDIR := src/modules/imu
+IMUCPP := $(wildcard $(IMUDIR)/*.cpp)
+IMUOBJ := $(addprefix obj/,$(notdir $(IMUCPP:.cpp=.o)))
+IMUPAT := $(IMUDIR)/%.cpp
 
 CPP_FILES := $(wildcard src/*.cpp)
 OBJ_FILES := $(addprefix obj/,$(notdir $(CPP_FILES:.cpp=.o)))
@@ -68,4 +73,9 @@ obj/%.o: $(CAMERAPAT)
 
 arduino: $(ARDUINOCPP) $(ARDUINOOBJ)
 obj/%.o: $(ARDUINOPAT)
+	$(CC) $(INCLUDE) $(CFLAGS) -c -o $@ $<
+
+
+imu: $(IMUCPP) $(IMUOBJ)
+obj/%.o: $(IMUPAT)
 	$(CC) $(INCLUDE) $(CFLAGS) -c -o $@ $<

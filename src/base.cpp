@@ -3,6 +3,9 @@
 #include "samplemodule.h"//shouldnt be here
 #include "modules/cpuinfo/cpuinfomodule.h"
 #include "modules/network/networkmodule.h"
+#include "modules/imu/imumodule.h"
+
+
 #ifdef USE_CV
 	#include "modules/camera/cameramodule.h"
 #endif
@@ -23,6 +26,7 @@ void bot::initialize(){
 	//m_modules.push_back(new samplemodule());
 	//m_modules.push_back(new cpuinfomodule());
 	//m_modules.push_back(new networkmodule());
+	m_modules.push_back(new imumodule());
 	m_modules.push_back(new arduinomodule());
 	#ifdef USE_CV
 	m_modules.push_back(new cameramodule());

@@ -1,4 +1,5 @@
 #include "modules/arduino/arduinomodule.h"
+#include "modules/arduino/arduinotags.h"
 #include "event.h"
 #include "base.h"
 #include "osutils.h"
@@ -38,17 +39,26 @@
 					//lets construct an event and push it out.
 					arduinodata* data = getArduinoData();
 					memcpy(data->data,buffer,i);
+					switch(data->data[0]){
+						case ARDUINO_TAG_IMU:
+							data->eflag = EFLAG_IMURAW;
+						break;
+						case ARDUINO_TAG_GPS:
+							data->eflag = EFLAG_GPSRAW;
+						break;
+					}	
 					data->numChar = i;
 					m_events.push_back(data);
 					memcpy(buffer,buffer+i+1,size-i-1);
 					size-=i+1;
+					i=-1;
 				}
 			}
 		}
 	}
 
 	void arduinomodule::initializeReader(){
-		m_device = openSerialPort("/dev/ttyACM0",115200,0,0);
+		m_device = openSerialPort("/dev/ttyACM1",115200,0,0);
 		spawnThread(arduinomodule::thread, this);
 		m_dataArrived=false;
 	}
@@ -89,7 +99,7 @@
 		while(!m_events.empty()){
 			arduinodata* dataline = m_events.back();
 			m_events.pop_back();
-			event* evt = this->makeEvent(1,dataline);
+			event* evt = this->makeEvent(EFLAG_ARDUINORAW|dataline->eflag,dataline);
 			evt->m_print= arduinomodule::printEvent;
 			data->m_eventQueue.push_back(evt);
 			m_sent_events.push_back(dataline);
