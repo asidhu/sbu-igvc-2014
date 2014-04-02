@@ -1,5 +1,6 @@
 #include "base.h"
 #include "event.h"
+#include "logger.h"
 #include "samplemodule.h"//shouldnt be here
 #include "modules/cpuinfo/cpuinfomodule.h"
 #include "modules/network/networkmodule.h"
@@ -32,6 +33,8 @@ void bot::initialize(){
 	m_modules.push_back(new cameramodule());
 	#endif
 	m_modules.push_back(new debugmodule(&std::cout));	
+
+	Logger::initialize("cfg/logger.cfg");
 	
 	uint32 count=0;
 	for(std::vector<module*>::iterator it = m_modules.begin(); it!=m_modules.end();it++){

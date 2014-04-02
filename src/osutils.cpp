@@ -5,10 +5,50 @@
 #include <string.h>
 #include <fcntl.h>
 #include <pthread.h>
-
+#include <stdio.h>
 
 void sleepms(int ms){
 	usleep(ms*1000);
+}
+
+
+void readFile(const char* name, char* data, long& size){
+	if(size ==0 || data==NULL)
+	{
+		FILE* file;
+		file = fopen(name, "rb");
+		if(file == NULL){
+			size=0;
+			data=NULL;
+			return;
+		}
+		fseek(file, 0, SEEK_END);
+		size = ftell(file);
+		fclose(file);
+		return;
+	}
+	FILE * file;
+	file = fopen(name, "rb");
+	if(file==NULL){
+		size = 0;
+		return;
+	}
+	long result = fread(data,1,size,file);
+	size = result;
+	data[result]=0;
+	fclose(file);
+}
+
+void writeFile( const char* name, const char* data,const long size){
+	FILE* file = fopen(name, "wb");
+	fwrite(data,1,size,file);
+	fclose(file);
+}
+
+void appendFile(const char* name,const char* data,const long size){
+	FILE* file = fopen(name, "ab");
+	fwrite(data,1,size,file);
+	fclose(file);
 }
 
 int spawnThread( void*(*threaded)(void*), void * arg){
