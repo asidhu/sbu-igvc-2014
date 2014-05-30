@@ -1,7 +1,7 @@
 CC=gcc
 MAKE= make
 CFLAGS:=-lstdc++ -lpthread  -Wall -g
-INCLUDE:=-Isrc/ -Ilib/  $(shell pkg-config --cflags opencv)
+INCLUDE:=-Isrc/ -Ilib/ -I/usr/include/  $(shell pkg-config --cflags opencv)
 MODULES = cpuinfo network arduino imu
 
 CPUINFOCPP := $(wildcard src/modules/cpuinfo/*.cpp)

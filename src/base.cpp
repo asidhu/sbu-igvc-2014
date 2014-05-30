@@ -7,9 +7,7 @@
 #include "modules/imu/imumodule.h"
 
 
-#ifdef USE_CV
 	#include "modules/camera/cameramodule.h"
-#endif
 #include "modules/arduino/arduinomodule.h"
 #include "osutils.h"
 #include "event_flag.h"
@@ -29,9 +27,7 @@ void bot::initialize(){
 	//m_modules.push_back(new networkmodule());
 	m_modules.push_back(new imumodule());
 	m_modules.push_back(new arduinomodule());
-	#ifdef USE_CV
 	m_modules.push_back(new cameramodule());
-	#endif
 	m_modules.push_back(new debugmodule(&std::cout));	
 
 	Logger::initialize("cfg/logger.cfg");

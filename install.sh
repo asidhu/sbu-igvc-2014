@@ -1,4 +1,4 @@
-# INSTALL SCRIPT
+#INSTALL SCRIPT
 set -e
 sudo echo "GET SUPER POWERS!!!"
 OPENCV_LOCATION=/usr/src/opencv/
@@ -43,6 +43,9 @@ tar xvf v4l-utils-0.8.8.tar.bz2
 cd v4l-utils-0.8.8
 make
 sudo make install
+sudo apt-get -y install v4l-utils libv4l-0 libv4l-dev
+
+
 
 echo "Installing opencv..."
 sudo mkdir -p $OPENCV_LOCATION

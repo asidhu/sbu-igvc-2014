@@ -11,27 +11,35 @@
 #include <stdio.h>
 #include <cstring>
 #include <opencv2/opencv.hpp>
+#include <linux/videodev2.h>
+#include "logger.h"
 	void* cameramodule::thread(void* args){
 		cameramodule* module = (cameramodule*) args;
-		
-	//	while(true){
-			module->openCamera(1);
-	//	}
+		cv::VideoCapture m_left(module->m_cfg.dev_cam_left),m_right(module->m_cfg.dev_cam_right);
+		if(!m_left.isOpened()){
+			Logger::log(module->m_moduleid,LOGGER_ERROR,"Unable to open left camera!");
+		}
+		if(!m_right.isOpened()){
+			Logger::log(module->m_moduleid,LOGGER_ERROR,"Unable to open right camera!");
+		}
+		while(true){
+			module->runCamera(&m_left, &m_right);
+		}
 		return NULL;			
 	}
-
-	void cameramodule::openCamera(int id){
+	
+	void cameramodule::runCamera(cv::VideoCapture* L, cv::VideoCapture* R){
 		using namespace cv;
-		VideoCapture cap(id);
-		if(!cap.isOpened()){
+		VideoCapture cap = *R;
+		if(!cap.isOpened())
 			return;
-		}
 		Mat edges;
 		Mat blue;
 		namedWindow("edges",1);
 		for(;;){
 			Mat frame;
-			cap >> frame;
+			if(!cap.read(frame))
+				continue;
 			Mat channel[3];
 			split(frame,channel);
 			blue=channel[0];
@@ -46,6 +54,7 @@
 			Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
 			 
 			bool done;		
+			
 			do
 			{
 				erode(blue, eroded, element);
@@ -84,6 +93,7 @@
 			if(waitKey(30)>=0)break;
 		}
 	}
+	
 
 	void cameramodule::initializeReader(){
 		spawnThread(cameramodule::thread, this);
@@ -103,6 +113,7 @@
 		4) listeners should also be setup HERE. If you want to listen to some event, take listener_flag and | it with the event flag.
 	**/
 	void cameramodule::initialize(uint32& listener_flag){
+		cameraconfig::readconfig(m_cfg,m_moduleid);
 		initializeReader();
 	}
 
