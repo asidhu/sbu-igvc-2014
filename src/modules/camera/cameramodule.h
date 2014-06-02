@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <opencv2/opencv.hpp>
-
+#include "modules/camera/camera_algorithm.h"
 
 
 class cameramodule:public module{
@@ -17,6 +17,9 @@ private:
 	void initializeReader();
 	void runCamera(cv::VideoCapture*,cv::VideoCapture*);
 	cameraconfig m_cfg;
+	camera_algorithm* m_algorithms;
+	calib_params calibration_parameters;
+	cam_params left_params, right_params;
 public:
 	void initialize(uint32&);
 	void update(bot_info*);

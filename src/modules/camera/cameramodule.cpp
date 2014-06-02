@@ -15,7 +15,9 @@
 #include "logger.h"
 	void* cameramodule::thread(void* args){
 		cameramodule* module = (cameramodule*) args;
-		cv::VideoCapture m_left(module->m_cfg.dev_cam_left),m_right(module->m_cfg.dev_cam_right);
+		int leftCam = atoi(module->m_cfg.dev_cam_left);
+		int rightCam = atoi(module->m_cfg.dev_cam_right);
+		cv::VideoCapture m_left(leftCam),m_right(rightCam);
 		if(!m_left.isOpened()){
 			Logger::log(module->m_moduleid,LOGGER_ERROR,"Unable to open left camera!");
 		}
@@ -27,17 +29,38 @@
 		}
 		return NULL;			
 	}
+
+
 	
 	void cameramodule::runCamera(cv::VideoCapture* L, cv::VideoCapture* R){
 		using namespace cv;
-		VideoCapture cap = *R;
-		if(!cap.isOpened())
+		VideoCapture left=*L,
+			right = *R;
+		if(!left.isOpened() || !right.isOpened())
 			return;
+		left.grab();
+		right.grab();
+		Mat leftPic,rightPic;
+		if(!left.retrieve(leftPic)||
+			!right.retrieve(rightPic))
+			return;
+
+		Mat leftGray, rightGray;
+		cvtColor(leftPic,leftGray,CV_BGR2GRAY);
+		cvtColor(rightPic,rightGray,CV_BGR2GRAY);
+		left_params.gray=leftGray;
+		right_params.gray=rightGray;
+		calibration_parameters.left_params=&left_params;
+		calibration_parameters.right_params = &right_params;
+		m_algorithms->calib(calibration_parameters,leftPic,rightPic);
+		
+		/*
 		Mat edges;
 		Mat blue;
 		namedWindow("edges",1);
-		for(;;){
 			Mat frame;
+			left.grab();
+			right.grab();
 			if(!cap.read(frame))
 				continue;
 			Mat channel[3];
@@ -83,15 +106,17 @@
 				line(edges,pt1,pt2,Scalar(255),3,CV_AA);
 			}
 */
+/*
 			for(size_t i=0;i<lines.size();i++){
 				Vec4i v = lines[i];
 				line(edges, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255),3,CV_AA);
 			}
 			imshow("edges",edges);
 			imshow("regular",frame);
+*/
+
 			
-			if(waitKey(30)>=0)break;
-		}
+			waitKey(30);
 	}
 	
 
@@ -115,6 +140,8 @@
 	void cameramodule::initialize(uint32& listener_flag){
 		cameraconfig::readconfig(m_cfg,m_moduleid);
 		initializeReader();
+		m_algorithms = new camera_algorithm();
+		m_algorithms->beginCalib(calibration_parameters);
 	}
 
 	void cameramodule::printEvent(std::ostream& out, const event* evt){

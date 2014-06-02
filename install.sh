@@ -51,9 +51,15 @@ echo "Installing opencv..."
 sudo mkdir -p $OPENCV_LOCATION
 sudo chown $USER $OPENCV_LOCATION
 cd $OPENCV_LOCATION
-git clone https://github.com/Itseez/opencv.git .
-mkdir build
+if [ -e .git ]
+then
+	echo "already have opencv!"
+else	
+	git clone https://github.com/Itseez/opencv.git .
+fi
+git checkout 2.4.9 #switch to stable release
+mkdir -p build
 cd build 
-cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -D CMAKE_BUILD_TYPE=RELEASE .. #-D CMAKE_INSTALL_PREFIX=/usr/local ..
 make
 sudo make install

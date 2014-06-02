@@ -1,5 +1,5 @@
-CAMERA_L=/dev/video0
-CAMERA_R=/dev/video1
+CAMERA_L=/dev/video1
+CAMERA_R=/dev/video2
 
 echo "Checking for cameras..."
 
