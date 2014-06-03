@@ -36,6 +36,14 @@
 		using namespace cv;
 		VideoCapture left=*L,
 			right = *R;
+		Mat grass = imread("grass.jpg",CV_LOAD_IMAGE_COLOR);
+		
+		m_parameters->m_left.normal=grass;
+		m_parameters->m_right.normal=grass;
+		m_algorithms->lineDetection(m_parameters);
+		
+			waitKey(30);
+
 		if(!left.isOpened() || !right.isOpened())
 			return;
 		left.grab();
@@ -44,76 +52,25 @@
 		if(!left.retrieve(leftPic)||
 			!right.retrieve(rightPic))
 			return;
-
-		Mat leftGray, rightGray;
-		cvtColor(leftPic,leftGray,CV_BGR2GRAY);
-		cvtColor(rightPic,rightGray,CV_BGR2GRAY);
-		left_params.gray=leftGray;
-		right_params.gray=rightGray;
-		calibration_parameters.left_params=&left_params;
-		calibration_parameters.right_params = &right_params;
-		m_algorithms->calib(calibration_parameters,leftPic,rightPic);
 		
-		/*
-		Mat edges;
-		Mat blue;
-		namedWindow("edges",1);
-			Mat frame;
-			left.grab();
-			right.grab();
-			if(!cap.read(frame))
-				continue;
-			Mat channel[3];
-			split(frame,channel);
-			blue=channel[0];
-			GaussianBlur(channel[0],edges,Size(7,7),1.5,1.5);
-			threshold(edges,edges,100,255,0);
+		if(m_parameters->m_left.calibrated){
+			stereomap SM = m_parameters->m_calib.SM;
+			remap(leftPic.clone(),leftPic,SM.map1x,SM.map1y,INTER_LINEAR,BORDER_CONSTANT,Scalar());
+		}
+		if(m_parameters->m_right.calibrated){
+			stereomap SM = m_parameters->m_calib.SM;
+			remap(rightPic.clone(),rightPic,SM.map2x,SM.map2y,INTER_LINEAR,BORDER_CONSTANT,Scalar());
+		}
+		m_parameters->m_left.normal=leftPic;
+		m_parameters->m_right.normal=rightPic;
+		cvtColor(leftPic, m_parameters->m_left.gray ,CV_BGR2GRAY);
+		cvtColor(rightPic,m_parameters->m_right.gray ,CV_BGR2GRAY);
+		split(leftPic,m_parameters->m_left.channels);
+		split(rightPic,m_parameters->m_right.channels);
+
+		//m_algorithms->calib(calibration_parameters,leftPic,rightPic);
+		
 			
-			threshold(blue,blue,200,255,0);
-			Mat skel(blue.size(), CV_8UC1, Scalar(0));
-			Mat temp;
-			Mat eroded;
-			 
-			Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
-			 
-			bool done;		
-			
-			do
-			{
-				erode(blue, eroded, element);
-				dilate(eroded, temp, element); // temp = open(img)
-				subtract(blue, temp, temp);
-				bitwise_or(skel, temp, skel);
-				eroded.copyTo(blue);
-				done = (countNonZero(blue) == 0);
-			} while (!done);
-			imshow("skeleton",skel);
-			Canny(edges,edges,0,30,3);
-			//GaussianBlur(edges,edges,Size(7,7),1.5,1.5);
-			std::vector<Vec4i> lines;
-			HoughLinesP(edges,lines,1,CV_PI/180,50,50,10);
-			
-/*
-			for(size_t i =0; i<lines.size();i++){
-				float rho = lines[i][0], theta = lines[i][1];
-				Point pt1, pt2;
-				double a =cos(theta) , b=sin(theta);
-				double x0 = a*rho, y0 = b*rho;
-				pt1.x= cvRound(x0+1000*(-b));
-				pt1.y= cvRound(y0+1000*(a));
-				pt2.x= cvRound(x0-1000*(-b));
-				pt2.y= cvRound(y0-1000*(a));
-				line(edges,pt1,pt2,Scalar(255),3,CV_AA);
-			}
-*/
-/*
-			for(size_t i=0;i<lines.size();i++){
-				Vec4i v = lines[i];
-				line(edges, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255),3,CV_AA);
-			}
-			imshow("edges",edges);
-			imshow("regular",frame);
-*/
 
 			
 			waitKey(30);
@@ -141,7 +98,7 @@
 		cameraconfig::readconfig(m_cfg,m_moduleid);
 		initializeReader();
 		m_algorithms = new camera_algorithm();
-		m_algorithms->beginCalib(calibration_parameters);
+		m_algorithms->beginCalib(m_parameters);
 	}
 
 	void cameramodule::printEvent(std::ostream& out, const event* evt){

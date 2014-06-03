@@ -1,6 +1,7 @@
 #ifndef _CAMERA_CONFIG_H
 #define _CAMERA_CONFIG_H
 #include "rapidxml/rapidxml.hpp"
+#include "modules/camera/camera_algorithm.h"
 struct cam_ctrl{
 	char* name;
 	int id;
@@ -32,6 +33,7 @@ public:
 	char dev_cam_right[256];
 	int cam_left_enabled,cam_right_enabled;
 	cam_settings left_settings, right_settings;
+	algorithm_params* alg_params;
 };
 
 

@@ -76,7 +76,7 @@ void cameraconfig::readconfig(cameraconfig & cfg, int mid){
 	}	
 	
 
-
+	
 }
 
 void cameraconfig::checkCtrl(cam_ctrl& camctrl,int fd, int ID){

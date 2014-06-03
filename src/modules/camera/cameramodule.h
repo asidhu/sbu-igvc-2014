@@ -18,8 +18,7 @@ private:
 	void runCamera(cv::VideoCapture*,cv::VideoCapture*);
 	cameraconfig m_cfg;
 	camera_algorithm* m_algorithms;
-	calib_params calibration_parameters;
-	cam_params left_params, right_params;
+	algorithm_params *m_parameters;
 public:
 	void initialize(uint32&);
 	void update(bot_info*);
@@ -28,7 +27,7 @@ public:
 		return myName;
 	}
 	cameramodule(){
-	
+		m_parameters = new algorithm_params();	
 	}
 
 };
