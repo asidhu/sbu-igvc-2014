@@ -95,6 +95,7 @@
 		4) listeners should also be setup HERE. If you want to listen to some event, take listener_flag and | it with the event flag.
 	**/
 	void cameramodule::initialize(uint32& listener_flag){
+		m_cfg.alg_params=m_parameters;
 		cameraconfig::readconfig(m_cfg,m_moduleid);
 		initializeReader();
 		m_algorithms = new camera_algorithm();
