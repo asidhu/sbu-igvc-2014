@@ -1,4 +1,5 @@
 #include "modules/gps/gpsmodule.h"
+#include "modules/gps/gpsdata.h"
 #include "event.h"
 #include "base.h"
 #include "osutils.h"
@@ -122,7 +123,7 @@ void gpsmodule::pushEvent(event* evt){
 	  m_dataArrived=true;
 	} else {
 	  Logger::log(m_moduleid,LOGGER_WARNING,
-		      "Failed to read fix info from arduino message!");
+	      "Failed to read location info from arduino message!");
 	}
 	break;
 
