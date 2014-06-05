@@ -111,7 +111,7 @@ void gpsmodule::pushEvent(event* evt){
 
       case ARDUINO_PROTOCOL_LOC:
 	float
-	if (sscanf(data->data, FIX_FORMAT, &gps_id, &fix, &quality)
+	if (sscanf(data->data, LOC_FORMAT, &gps_id, &fix, &quality)
 	    == 3) {
 	  m_gpsdata.gps[gps_id].fix = fix;
 	  m_gpsdata.gps[gps_id].fix_quality = quality;

@@ -13,6 +13,7 @@
 #define ARDUINO_PROTOCOL_ANGLE  'A'
 #define ARDUINO_PROTOCOL_ELEV   'E'
 #define ARDUINO_PROTOCOL_SAT    'N'
+#define RADIUS_OF_EARTH         6378100 // in meters
 
 class gpsmodule:public module{
 private:
@@ -34,6 +35,7 @@ public:
 	}
 
 };
+
 
 
 #endif
