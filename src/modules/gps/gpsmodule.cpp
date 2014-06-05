@@ -110,11 +110,15 @@ void gpsmodule::pushEvent(event* evt){
 	break;
 
       case ARDUINO_PROTOCOL_LOC:
-	float
-	if (sscanf(data->data, LOC_FORMAT, &gps_id, &fix, &quality)
-	    == 3) {
-	  m_gpsdata.gps[gps_id].fix = fix;
-	  m_gpsdata.gps[gps_id].fix_quality = quality;
+	float longitude, latitude;
+	char longitude_dir, latitude_dir; // N,S,E,W
+	if (sscanf(data->data, LOC_FORMAT, &gps_id, 
+		   &latitude, &latitude_dir,
+		   &longitude, &longitude_dir) == 5) {
+	  m_gpsdata.gps[gps_id].latitude = latitude *
+	    (latitude_dir == 'S' | latitude_dir == 's' ? -1 : 1);
+	  m_gpsdata.gps[gps_id].longitude = longitude * 
+	    (longitude_dir == 'W' | longitude_dir == 'w' ? -1 : 1);
 	  m_dataArrived=true;
 	} else {
 	  Logger::log(m_moduleid,LOGGER_WARNING,
