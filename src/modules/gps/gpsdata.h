@@ -7,8 +7,8 @@ struct gpsdata{
     int date[4];        // [day, month, year]
     int fix;		// fix (1) or not (0)
     int fix_quality;    // NOT SURE ABOUT THIS ONE
-    float latitude;     // degrees only (minutes seconds converted)
-    float longitude;	// degrees only
+    float latitude;     // degrees only (minutes seconds converted) +/-
+    float longitude;	// degrees only 
     float speed;        // knots
     float angle;        // degrees
     float altitude;	// dunno what format? akira?

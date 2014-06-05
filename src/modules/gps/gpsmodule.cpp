@@ -186,3 +186,36 @@ void gpsmodule::pushEvent(event* evt){
 }
 
 const char* gpsmodule::myName="GPS Module";
+
+float toRadians(float degrees) {
+  return degrees * M_PI / 180;
+}
+
+float toDegrees(float radians) {
+  return radians * 180 / M_PI;
+}
+
+float distance(float lat1, float long1, float lat2, float long2) {
+  float lat1_rad = toRadians(lat1);
+  float long2_rad = toRadians(long1)
+  float lat2_rad = toRadians(lat2);
+  float long2_rad = toRadians(long2);
+
+  // Spherical Law of Cosines
+  return RADIUS_OF_EARTH * acos(sin(lat1_rad) * sin(lat2_rad) +
+				cos(lat1_rad) * cos(lat2_rad) *
+				cos(long2_rad - long1_rad));
+}
+
+float angle(float lat1, float long1, float lat2, float long2) {
+  float lat1_rad = toRadians(lat1);
+  float long2_rad = toRadians(long1)
+  float lat2_rad = toRadians(lat2);
+  float long2_rad = toRadians(long2);
+
+  float y = sin(long2_rad - long1_rad) * cos(lat2_rad);
+  float x = cos(lat1_rad) * sin(lat2_rad) - 
+    sin(lat1_rad) * cos(lat2_rad) * cos(long2_rad - long1_rad);
+
+  return toDegrees(atan2(y, x));
+}
