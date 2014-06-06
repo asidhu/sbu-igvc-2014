@@ -1,5 +1,6 @@
 #include "modules/arduino/arduinomodule.h"
 #include "modules/arduino/arduinotags.h"
+#include "modules/arduino/arduinoconfig.h"
 #include "event.h"
 #include "base.h"
 #include "osutils.h"
@@ -58,7 +59,7 @@
 	}
 
 	void arduinomodule::initializeReader(){
-		m_device = openSerialPort("/dev/ttyACM1",115200,0,0);
+		m_device = openSerialPort(path,115200,0,0);
 		spawnThread(arduinomodule::thread, this);
 		m_dataArrived=false;
 	}
@@ -77,6 +78,7 @@
 		4) listeners should also be setup HERE. If you want to listen to some event, take listener_flag and | it with the event flag.
 	**/
 	void arduinomodule::initialize(uint32& listener_flag){
+	        readPathConfig(cfgfile, m_moduleid, path);
 		initializeReader();
 	}
 

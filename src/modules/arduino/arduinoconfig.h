@@ -1,6 +1,6 @@
 #ifndef _ARDUINO_CONFIG_H
 #define _ARDUINO_CONFIG_H
 
-char * readPathConfig(int ardNum, int m_id);
+void readPathConfig(char *cfgfile, int m_id, char *path);
 
 #endif
