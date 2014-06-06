@@ -4,13 +4,12 @@
 #include <cstring>
 #include <cstdio>
 
-char * readPathConfig(int ardNum, int m_id) {
-  char path[256];
+void readPathConfig(int ardNum, int m_id, char *path) {
   char buff[8192];
   
   if (ardNum < 1 || ardNum > 2) {
     Logger::log(m_id, LOGGER_ERROR, "Invalid arduino number referenced");
-    return path;
+    return;
   }
 
   char filename[256];
@@ -25,6 +24,4 @@ char * readPathConfig(int ardNum, int m_id) {
   xml_node<> * dev = body->first_node("dev", strlen("dev"));
   
   strcpy(path, dev->value());
-
-  return path;
 }
