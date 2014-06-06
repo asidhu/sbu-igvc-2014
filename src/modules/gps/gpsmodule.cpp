@@ -202,7 +202,7 @@ float distance(float lat1, float long1, float lat2, float long2) {
   float long2_rad = toRadians(long2);
 
   // Spherical Law of Cosines
-  return RADIUS_OF_EARTH * acos(sin(lat1_rad) * sin(lat2_rad) +
+  return EARTH_RADIUS * acos(sin(lat1_rad) * sin(lat2_rad) +
 				cos(lat1_rad) * cos(lat2_rad) *
 				cos(long2_rad - long1_rad));
 }
@@ -218,4 +218,23 @@ float angle(float lat1, float long1, float lat2, float long2) {
     sin(lat1_rad) * cos(lat2_rad) * cos(long2_rad - long1_rad);
 
   return toDegrees(atan2(y, x));
+}
+
+float normalRadius(float phi) {
+  ecc_squared = 1 - pow(EARTH_SEMIMINOR, 2) / pow(EARTH_SEMIMAJOR, 2);
+  return (EARTH_SEMIMAJOR / sqrt(1 - ecc_squared * pow(sin(phi), 2)));
+}
+
+float toX(float lat, float lon) {
+  float phi = toRadians(lat);
+  float lambda = toRadians(lon);
+
+  return normalRadius(lat) * cos(lat) * cos(lambda);
+}
+
+float toY(float lat, float lon) {
+  float phi = toRadians(lat);
+  float lambda = toRadians(lon);
+
+  return normalRadius(lat) * cos(lat) * sin(lambda);
 }

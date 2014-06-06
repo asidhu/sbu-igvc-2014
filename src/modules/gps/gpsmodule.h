@@ -14,7 +14,9 @@
 #define ARDUINO_PROTOCOL_ANGLE  'A'
 #define ARDUINO_PROTOCOL_ELEV   'E'
 #define ARDUINO_PROTOCOL_SAT    'N'
-#define RADIUS_OF_EARTH         6378100 // in km
+#define EARTH_SEMIMAJOR         6378100 // in km
+#define EARTH_SEMIMINOR         6356800 // in km
+#define EARTH_RADIUS            6371000 // in km
 
 class gpsmodule:public module{
 private:
@@ -45,5 +47,8 @@ float angle(float lat1, float long1, float lat2, float long2);
 
 float toRadians(float degrees);
 float toDegrees(float radians);
+float normalRadius(float phi);
+float toX(float lat, float lon);
+float toY(float lat, float lon);
 
 #endif
