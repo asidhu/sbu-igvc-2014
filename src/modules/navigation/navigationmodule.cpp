@@ -20,12 +20,38 @@
 		3) dont open hardware or pipes or sockets now, there is a command for that. Open it at that time, only read files.
 		4) listeners should also be setup HERE. If you want to listen to some event, take listener_flag and | it with the event flag.
 	**/
+void* navigationmodule::thread(void* args) {
+  navigationmodule* module = (navigationmodule*) args;
+  module->navigate();
+}
+
+void navigationmodule::navigate() {
+  while(true) {
+    updatePos();
+  }
+}
+
+void navigationmodule::updatePos() {
+  if (modifiedGPS && modifiedIMU) {
+    // kalman filter here
+    
+  }
+  modifiedGPS = false;
+  modifiedIMU = false;
+}
+
 	void navigationmodule::initialize(uint32& listener_flag){
+	  m_gpsdata = (gpsdata*) malloc(sizeof(gpsdata));
+	  m_imudata = (imudata*) malloc(sizeof(imudata));
+	  
+	  navigationmodule::modifiedGPS = false;
+	  navigationmodule::modifiedIMU = false;
 		m_navmode = MODE_MANUAL;
 		//Get joystick events for manual ctrl
 		listener_flag|=	EFLAG_JOYSTICKEVT;
 		//Get GPS and IMU events for localization and pose estimation
 		listener_flag|= EFLAG_GPSDATA | EFLAG_IMUDATA;
+		spawnThread(navigationmodule::thread, this);
 	}
 
 
@@ -36,7 +62,7 @@
 		3) clean up any data from your previously published events (event objects are deleted after they are pushed be careful about that).
 	**/
 	void navigationmodule::update(bot_info* data){
-	
+	  
 	}
 	/**
 		Rules:
@@ -54,11 +80,10 @@
 				}
 			break;
 			case EFLAG_IMUDATA:
-				
+			  processIMUEvent((imudata*)evt->m_data);
 			break;
 			case EFLAG_GPSDATA:
-				
-			break;
+			  processGPSEvent((gpsdata*)evt->m_data);				break;
 		}	
 	}
 	
@@ -103,11 +128,14 @@
 	
 	}
 
-	void navigationmodule::processIMUEvent(imudata*){
-
+	void navigationmodule::processIMUEvent(imudata* data){
+	  memcpy(m_imudata, data);
+	  modifiedIMU = true;
 	}
 	
-	void navigationmodule::processGPSEvent(gpsdata*){
-
+	void navigationmodule::processGPSEvent(gpsdata* data){
+	  memcpy(m_gpsdata, data);
+	  modifiedGPS = true;
 	}
+
 const char* navigationmodule::myName="Navigation Module";
