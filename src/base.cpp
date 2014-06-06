@@ -5,7 +5,7 @@
 #include "modules/cpuinfo/cpuinfomodule.h"
 #include "modules/network/networkmodule.h"
 #include "modules/imu/imumodule.h"
-
+#include "modules/joystick/joystickmodule.h"
 
 	#include "modules/camera/cameramodule.h"
 #include "modules/arduino/arduinomodule.h"
@@ -25,6 +25,7 @@ void bot::initialize(){
 	//m_modules.push_back(new samplemodule());
 	//m_modules.push_back(new cpuinfomodule());
 	//m_modules.push_back(new networkmodule());
+	m_modules.push_back(new joystickmodule());
 	m_modules.push_back(new imumodule());
 	m_modules.push_back(new arduinomodule());
 	m_modules.push_back(new cameramodule());

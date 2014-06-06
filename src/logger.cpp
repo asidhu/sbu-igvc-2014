@@ -3,6 +3,7 @@
 #include "osutils.h"
 #include "string.h"
 #include <iostream>
+#include <stdio.h>
 namespace Logger{
 
 const char* defaultLoggerConfig = 
@@ -51,9 +52,16 @@ void Logger::log(int moduleID, int level, const char* buff, int len){
 
 
 void Logger::log(int moduleID, int level, const char* buff){
+	char buffer[4096];
+	strcpy(buffer,buff);
+	char* end = buffer + strlen(buff);
+	*end = '\n';
+	*(end+1)='\r';
+	*(end+2)=0;
 	if(initialized)
-		appendFile(loggerFile, buff, strlen(buff));
+		appendFile(loggerFile, buffer, strlen(buffer));
 
+	printf(buffer);
 }
 
 

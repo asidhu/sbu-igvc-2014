@@ -46,6 +46,11 @@ sudo make install
 sudo apt-get -y install v4l-utils libv4l-0 libv4l-dev
 
 
+echo "Getting xboxdrv..."
+sudo add-apt-repository ppa:grumbel/ppa -y
+sudo apt-get update -y
+sudo apt-get install xboxdrv -y
+
 
 echo "Installing opencv..."
 sudo mkdir -p $OPENCV_LOCATION
@@ -63,3 +68,11 @@ cd build
 cmake -D CMAKE_BUILD_TYPE=RELEASE .. #-D CMAKE_INSTALL_PREFIX=/usr/local ..
 make
 sudo make install
+
+
+
+echo "adding startup scripts..."
+sudo cp startup_scripts/init_script.sh /etc/init.d/robot_init
+sudo update-rc.d -f robot_init remove
+sudo update-rc.d robot_init defaults
+

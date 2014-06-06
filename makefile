@@ -2,7 +2,7 @@ CC=gcc
 MAKE= make
 CFLAGS:=-lstdc++ -lpthread  -Wall -g
 INCLUDE:=-Isrc/ -Ilib/ -I/usr/include/  $(shell pkg-config --cflags opencv)
-MODULES = cpuinfo network arduino imu
+MODULES = cpuinfo network arduino imu joystick
 
 CPUINFOCPP := $(wildcard src/modules/cpuinfo/*.cpp)
 CPUINFOOBJ := $(addprefix obj/,$(notdir $(CPUINFOCPP:.cpp=.o)))
@@ -28,6 +28,11 @@ IMUDIR := src/modules/imu
 IMUCPP := $(wildcard $(IMUDIR)/*.cpp)
 IMUOBJ := $(addprefix obj/,$(notdir $(IMUCPP:.cpp=.o)))
 IMUPAT := $(IMUDIR)/%.cpp
+
+JSDIR := src/modules/joystick
+JSCPP := $(wildcard $(JSDIR)/*.cpp)
+JSOBJ := $(addprefix obj/,$(notdir $(JSCPP:.cpp=.o)))
+JSPAT := $(JSDIR)/%.cpp
 
 CPP_FILES := $(wildcard src/*.cpp)
 OBJ_FILES := $(addprefix obj/,$(notdir $(CPP_FILES:.cpp=.o)))
@@ -79,3 +84,8 @@ obj/%.o: $(ARDUINOPAT)
 imu: $(IMUCPP) $(IMUOBJ)
 obj/%.o: $(IMUPAT)
 	$(CC) $(INCLUDE) $(CFLAGS) -c -o $@ $<
+
+joystick: $(JSCPP) $(JSOBJ)
+obj/%.o: $(JSPAT)
+	$(CC) $(INCLUDE) $(CFLAGS) -c -o $@ $<
+
