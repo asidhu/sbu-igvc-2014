@@ -4,6 +4,7 @@
 #include "string.h"
 #include <iostream>
 #include <stdio.h>
+#include "module.h"
 namespace Logger{
 
 const char* defaultLoggerConfig = 
@@ -15,8 +16,9 @@ const char* myLoggerFile = "log/console.log";
 
 char loggerFile[256];
 bool initialized;
+std::vector<module*> *m_modules;
 };
-void Logger::initialize(char* cfgfile){
+void Logger::initialize(char* cfgfile, std::vector<module*> *modules){
 	char buff[4096];
 	long size=4096;
 	readFile(cfgfile,buff,size);
@@ -27,6 +29,7 @@ void Logger::initialize(char* cfgfile){
 		initialized=true;
 		return;
 	}
+	m_modules=modules;
 	using namespace rapidxml;
 	xml_document<> doc;
 	doc.parse<0>(buff);
@@ -50,18 +53,15 @@ void Logger::initialize(char* cfgfile){
 
 void Logger::log(int moduleID, int level, const char* format, ...){
 	va_list a_list;
-	char buffer[4096];
+	char buffer[4096], buffer2[4096];
 	va_start(a_list,format);
 	vsnprintf(buffer,4096,format,a_list);
 	va_end(a_list);
-	char* end = buffer + strlen(buffer);
-	*end = '\n';
-	*(end+1)='\r';
-	*(end+2)=0;
+	snprintf(buffer2,4096,"%s: %s \n\r", m_modules->at(moduleID)->getCommonName(),buffer);
 	if(initialized)
-		appendFile(loggerFile, buffer, strlen(buffer));
+		appendFile(loggerFile, buffer2, strlen(buffer));
 
-	printf(buffer);
+	printf(buffer2);
 }
 
 

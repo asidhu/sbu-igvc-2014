@@ -1,7 +1,11 @@
 #ifndef _JOYSTICK_CFG_H
 #define _JOYSTICK_CFG_H
-
-
+#define BUTTON_SAFETY			0x1
+#define BUTTON_FORWARD			0x2
+#define BUTTON_ROTATE_LEFT		0x3
+#define BUTTON_ROTATE_RIGHT		0x4
+#define BUTTON_BACKWARDS		0x5
+#define AXIS_THROTTLE			0x6
 //cfg should store mapping
 struct joystick_cfg{
 	char dev_name[256];

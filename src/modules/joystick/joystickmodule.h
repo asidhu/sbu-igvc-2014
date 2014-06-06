@@ -2,10 +2,38 @@
 #define _JOYSTICK_MODULE_H
 #include "module.h"
 #include "modules/joystick/joystickcfg.h"
+#include <vector>
+#include <iostream>
+
+class event;
+
+class joystickevent{
+	public:
+	int type;
+	union{
+		int btnValue;
+		double axisValue;
+	};
+
+};
+
 class joystickmodule:public module{
 	private:
 	static const char* myName;
+	void sendBtnEvt(int TYPE, int value);
+	void sendAxisEvt(int TYPE, double value);
+	static void printevent(std::ostream&, const event*);
 	joystick_cfg m_cfg;
+	std::vector<joystickevent*> m_event_pool;
+	std::vector<joystickevent*> m_event_queue;
+	std::vector<joystickevent*> m_event_sent;
+	joystickevent* getEvent(){
+		if(m_event_pool.size()==0)
+			m_event_pool.push_back(new joystickevent());
+		joystickevent* ret = m_event_pool.back();
+		m_event_pool.pop_back();
+		return ret;
+	}
 	public:
 	bool polling;
 	int calibration;
@@ -18,7 +46,6 @@ class joystickmodule:public module{
 	const char* getCommonName(){
 		return myName;
 	}
-
 };
 
 

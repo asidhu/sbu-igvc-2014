@@ -25,4 +25,7 @@
 #define EFLAG_IMUDATA		0x00010000
 
 
+//Joystick Module Flags
+#define EFLAG_JOYSTICKEVT	0x00020000
+
 #endif

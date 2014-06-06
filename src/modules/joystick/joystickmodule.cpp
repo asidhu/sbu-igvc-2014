@@ -17,23 +17,56 @@
 		return NULL;
 	}
 
+	void joystickmodule::sendBtnEvt(int TYPE, int value){
+		joystickevent* evt = getEvent();
+		evt->type=TYPE;
+		evt->btnValue=value;
+		m_event_queue.push_back(evt);	
+	}
 	
-
+	void joystickmodule::sendAxisEvt(int TYPE, double value){
+		joystickevent* evt = getEvent();
+		evt->type=TYPE;
+		evt->axisValue=value;
+		m_event_queue.push_back(evt);	
+	}
 	void joystickmodule::pollEvents(){
 		int fd_dev = open(m_cfg.dev_name,O_RDONLY);
 		if(fd_dev==-1){
 			Logger::log(m_moduleid,LOGGER_ERROR,"could not open the joystick device in config!");	
 			return;
 		}
+		char controller_name[80];
+		ioctl(fd_dev, JSIOCGNAME(80),&controller_name);
+		Logger::log(m_moduleid,LOGGER_INFO,"Found controller %s",controller_name);
 		//get information about controller.
-		if (calibration==0)
-		{
-			calibrateJoyStick(fd_dev);
-		}
 		while(polling){
+			if (calibration==0)
+			{
+				calibrateJoyStick(fd_dev);
+			}
+			//get events
 			struct js_event e;
 			read(fd_dev, &e,sizeof(e));
-			
+			if(e.type== JS_EVENT_BUTTON){
+				if(e.number == m_cfg.safety)
+					sendBtnEvt(BUTTON_SAFETY,e.value);
+				if(e.number == m_cfg.forward)
+					sendBtnEvt(BUTTON_FORWARD,e.value);
+				if(e.number == m_cfg.rotate_left)
+					sendBtnEvt(BUTTON_ROTATE_LEFT,e.value);
+				if(e.number == m_cfg.rotate_right)
+					sendBtnEvt(BUTTON_ROTATE_RIGHT,e.value);
+				if(e.number == m_cfg.backwards)
+					sendBtnEvt(BUTTON_BACKWARDS,e.value);
+			}
+			if(e.type == JS_EVENT_AXIS){
+				if(e.number == m_cfg.lt.id){
+					double power = ((double)e.value/(m_cfg.lt.max-m_cfg.lt.min))+.5;
+						sendAxisEvt(AXIS_THROTTLE,power);
+				}
+				
+			} 
 		}
 			
 	
@@ -64,6 +97,31 @@
 		3) clean up any data from your previously published events (event objects are deleted after they are pushed be careful about that).
 	**/
 	void joystickmodule::update(bot_info* data){
+		//return events in the sent queue to pool.
+		m_event_pool.insert(m_event_pool.end(),m_event_sent.begin(),m_event_sent.end());
+		m_event_sent.empty();
+		//send events waiting in the queue
+		std::vector<joystickevent*>::iterator it = m_event_queue.begin(),
+			last = m_event_queue.end(),start;
+		start=it;
+		for(;it!=last;it++){
+			joystickevent* js = *it;
+			event* evt = makeEvent(EFLAG_JOYSTICKEVT,js);
+			evt->m_print = joystickmodule::printevent;
+			data->m_eventQueue.push_back(evt);
+		}
+		m_event_sent.insert(m_event_sent.end(),start,last);
+		m_event_queue.erase(start,last);
+	}
+
+	void joystickmodule::printevent(std::ostream& out, const event* evt){
+		joystickevent* js = (joystickevent*)evt->m_data;
+		out <<"{ type:"<<js->type<<", value:";
+		if(js->type== AXIS_THROTTLE)
+			out << js->axisValue;
+		else
+			out << js->btnValue;
+		out<<"}";
 	}
 	/**
 		Rules:
@@ -74,6 +132,7 @@
 	void joystickmodule::pushEvent(event* evt){
 		
 	}
+
 	/**
 	 * Calibrates the configuration file to work with the controller
 	 */ 

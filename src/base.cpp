@@ -27,11 +27,11 @@ void bot::initialize(){
 	//m_modules.push_back(new networkmodule());
 	m_modules.push_back(new joystickmodule());
 	m_modules.push_back(new imumodule());
-	m_modules.push_back(new arduinomodule());
+	m_modules.push_back(new arduinomodule("cfg/arduino1.cfg"));
 	m_modules.push_back(new cameramodule());
 	m_modules.push_back(new debugmodule(&std::cout));	
 
-	Logger::initialize("cfg/logger.cfg");
+	Logger::initialize("cfg/logger.cfg",&m_modules);
 	
 	uint32 count=0;
 	for(std::vector<module*>::iterator it = m_modules.begin(); it!=m_modules.end();it++){
