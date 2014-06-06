@@ -4,6 +4,7 @@
 #include "modules/arduino/arduinodata.h"
 #include <iostream>
 #include <vector>
+#include <cstring>
 
 
 
@@ -37,6 +38,7 @@ public:
 	const char* getCommonName(){
 		return myName;
 	}
+	
 	arduinomodule(const char *cfgfile){
 	        strcpy(this->cfgfile, cfgfile);
 		m_dataArrived=false;

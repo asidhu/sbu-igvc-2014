@@ -1,6 +1,6 @@
 #include "modules/arduino/arduinomodule.h"
 #include "modules/arduino/arduinotags.h"
-#include "modults/arduino/arduinoconfig.h"
+#include "modules/arduino/arduinoconfig.h"
 #include "event.h"
 #include "base.h"
 #include "osutils.h"

@@ -7,8 +7,9 @@
 
 void readPathConfig(char *cfgfile, int m_id, char *path) {
   char buff[8192];
+  long size = 8192;
 
-  readFile(cfgfile, buff, 8192);
+  readFile(cfgfile, buff, size);
   
   using namespace rapidxml;
   xml_document<> doc;
