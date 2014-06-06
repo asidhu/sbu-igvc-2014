@@ -11,6 +11,8 @@
 class arduinomodule:public module{
 private:
 	static const char* myName;
+	char cfgfile[256];
+	char path[256];
 	static void* thread(void* arg);
 	static void printEvent(std::ostream&, const event*);
 	volatile bool m_dataArrived;
@@ -35,7 +37,8 @@ public:
 	const char* getCommonName(){
 		return myName;
 	}
-	arduinomodule(){
+	arduinomodule(const char *cfgfile){
+	        strcpy(this->cfgfile, cfgfile);
 		m_dataArrived=false;
 	}
 
