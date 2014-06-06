@@ -1,8 +1,11 @@
 #ifndef _CAMERA_CONFIG_H
 #define _CAMERA_CONFIG_H
-#include "rapidxml/rapidxml.hpp"
 #include "modules/camera/camera_algorithm.h"
 #include <opencv2/opencv.hpp>
+
+namespace rapidxml{
+template<class Ch> class xml_node;
+}
 struct cam_ctrl{
 	char* name;
 	int id;
@@ -20,14 +23,14 @@ struct cam_settings{
 
 class cameraconfig{
 private:
-	void camconfig(const char* dev, rapidxml::xml_node<> * cam, cam_settings &);
+	void camconfig(const char* dev, rapidxml::xml_node<char> * cam, cam_settings &);
 	void checkCtrl(cam_ctrl& ctrl, int fd, int ID);
 	void checkAuto(cam_ctrl& ctrl, int fd, int ID);
-	void readCtrl(cam_ctrl& ctrl, rapidxml::xml_node<> * cam, const char* ctrlname);
+	void readCtrl(cam_ctrl& ctrl, rapidxml::xml_node<char> * cam, const char* ctrlname);
 	void configCtrl(cam_ctrl& ctrl, int fd, int ID, int AUTOID);
-	void readCustomCtrls( rapidxml::xml_node<> * cam, cam_settings & );
+	void readCustomCtrls( rapidxml::xml_node<char> * cam, cam_settings & );
 	void configCustomCtrls(int fd,cam_settings & );
-	void loadAlgorithms(rapidxml::xml_node<>* cam);
+	void loadAlgorithms(rapidxml::xml_node<char>* cam);
 	static cv::Mat loadMatrix(const char* file);
 	static void saveMatrix(cv::Mat& ,const char* file);
 	

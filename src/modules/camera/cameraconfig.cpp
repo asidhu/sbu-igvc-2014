@@ -99,18 +99,18 @@ void cameraconfig::readconfig(cameraconfig & cfg, int mid){
 	cfg.loadAlgorithms(body);
 	
 }
-void setparam(rapidxml::xml_node<>* node, int i){
+void setparam(rapidxml::xml_node<char>* node, int i){
 	char buff[256];
 	sprintf(buff,"%d",i);
 	node->value(node->document()->allocate_string(buff));
 }
 
-void setparam(rapidxml::xml_node<>* node, float i){
+void setparam(rapidxml::xml_node<char>* node, float i){
 	char buff[256];
 	sprintf(buff,"%f",i);
 	node->value(node->document()->allocate_string(buff));
 }
-void setparam(rapidxml::xml_node<>* node, double i){
+void setparam(rapidxml::xml_node<char>* node, double i){
 	char buff[256];
 	sprintf(buff,"%f",i);
 	node->value(node->document()->allocate_string(buff));
@@ -202,7 +202,7 @@ void cameraconfig::saveMatrix(cv::Mat& img, const char* filename){
 		
 }
 
-void cameraconfig::loadAlgorithms(rapidxml::xml_node<>* cam){
+void cameraconfig::loadAlgorithms(rapidxml::xml_node<char>* cam){
 	using namespace rapidxml;
 	//load algorithm
 	xml_node<> * algorithm = cam->first_node("algorithm");
@@ -289,7 +289,7 @@ void cameraconfig::checkAuto(cam_ctrl& camctrl,int fd, int ID){
 
 }
 
-void cameraconfig::readCtrl(cam_ctrl& ctrl, rapidxml::xml_node<> *cam, const char* ctrlname){
+void cameraconfig::readCtrl(cam_ctrl& ctrl, rapidxml::xml_node<char> *cam, const char* ctrlname){
 	using namespace rapidxml;
 	xml_node<> *ctrlnode = cam->first_node(ctrlname, strlen(ctrlname));
 	if(ctrlnode==NULL)return;
@@ -323,7 +323,7 @@ void cameraconfig::configCtrl(cam_ctrl& camctrl, int fd, int id, int autoid){
 	}
 }
 
-void cameraconfig::readCustomCtrls( rapidxml::xml_node<> * cam, cam_settings & settings){
+void cameraconfig::readCustomCtrls( rapidxml::xml_node<char> * cam, cam_settings & settings){
 	settings.num_custom =0;
 	using namespace rapidxml;
 	xml_node<> * node = cam->first_node(cameraconfig_ctrl);
@@ -368,7 +368,7 @@ void cameraconfig::configCustomCtrls(int fd, cam_settings& settings){
 	}
 }
 
-void cameraconfig::camconfig(const char* dev, rapidxml::xml_node<> *cam, cam_settings& settings){
+void cameraconfig::camconfig(const char* dev, rapidxml::xml_node<char> *cam, cam_settings& settings){
 	int fd = open(dev, O_RDWR);
 	if(fd==-1)
 	{
