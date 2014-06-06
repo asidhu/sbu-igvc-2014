@@ -3,7 +3,7 @@
 #include "rapidxml/rapidxml.hpp"
 #include <cstring>
 #include <cstdio>
-
+#include "logger.h"
 char * readPathConfig(int ardNum, int m_id) {
   char path[256];
   char buff[8192];

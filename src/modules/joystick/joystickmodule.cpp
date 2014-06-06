@@ -113,13 +113,23 @@
 				}while(value!=1 && e.type!=JS_EVENT_BUTTON);
 				switch(calibration){
 					case 0: m_cfg.safety=number;break;
-					case 1: if(number!=m_cfg.safety)m_cfg.forward=number;break;
-					case 2: if(number!=m_cfg.safety || number!=m_cfg.forward)m_cfg.rotate_left=number;break;
-					case 3: if(number!=m_cfg.safety || number!=m_cfg.forward
-							|| number!=m_cfg.rotate_left)m_cfg.rotate_right=number;break;
-					case 4: if(number!=m_cfg.safety || number!=m_cfg.forward
-							|| number!=m_cfg.rotate_left || number!= m_cfg.rotate_right)
-								m_cfg.backwards=number;break;
+					case 1: if(number!=m_cfg.safety)m_cfg.forward=number;
+						else continue;
+						break;
+					case 2: if(number!=m_cfg.safety && number!=m_cfg.forward)
+						m_cfg.rotate_left=number;
+						else continue;
+						break;
+					case 3: if(number!=m_cfg.safety && number!=m_cfg.forward
+							&& number!=m_cfg.rotate_left)
+							m_cfg.rotate_right=number;
+						else continue;
+						break;
+					case 4: if(number!=m_cfg.safety && number!=m_cfg.forward
+							&& number!=m_cfg.rotate_left && number!= m_cfg.rotate_right)
+								m_cfg.backwards=number;
+						else continue;
+						break;
 
 				}
 			}
@@ -145,13 +155,16 @@
 						}
 						else{
 							axis_picked=true;
+							Logger::log(m_moduleid,LOGGER_INFO,"Picked axis %d",number);
 							axis = number;
 							min=max=value;
 						}
 					}else{
 						if(e.type==JS_EVENT_BUTTON){
-							if(number==m_cfg.safety)
+							if(number==m_cfg.safety){
+								Logger::log(m_moduleid,LOGGER_INFO,"Saved axis min:%d max:%d",min,max);
 								break;
+							}
 							else
 								Logger::log(m_moduleid,LOGGER_WARNING,"Thats not the safety button!!");
 						}else{

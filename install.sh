@@ -71,8 +71,4 @@ sudo make install
 
 
 
-echo "adding startup scripts..."
-sudo cp startup_scripts/init_script.sh /etc/init.d/robot_init
-sudo update-rc.d -f robot_init remove
-sudo update-rc.d robot_init defaults
 

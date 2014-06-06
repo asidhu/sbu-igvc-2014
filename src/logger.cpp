@@ -45,16 +45,16 @@ void Logger::initialize(char* cfgfile){
 	
 }
 
-void Logger::log(int moduleID, int level, const char* buff, int len){
-	if(initialized)
-		appendFile(loggerFile, buff, len);
-}
 
 
-void Logger::log(int moduleID, int level, const char* buff){
+
+void Logger::log(int moduleID, int level, const char* format, ...){
+	va_list a_list;
 	char buffer[4096];
-	strcpy(buffer,buff);
-	char* end = buffer + strlen(buff);
+	va_start(a_list,format);
+	vsnprintf(buffer,4096,format,a_list);
+	va_end(a_list);
+	char* end = buffer + strlen(buffer);
 	*end = '\n';
 	*(end+1)='\r';
 	*(end+2)=0;
