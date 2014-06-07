@@ -8,7 +8,7 @@
 #include "modules/joystick/joystickmodule.h"
 #include "modules/navigation/navigationmodule.h"
 #include "modules/motors/motormodule.h"
-	#include "modules/camera/cameramodule.h"
+//	#include "modules/camera/cameramodule.h"
 #include "modules/arduino/arduinomodule.h"
 #include "osutils.h"
 #include "event_flag.h"
@@ -17,7 +17,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <signal.h>
-
+#include <stdlib.h>
 bot my_bot;
 void terminate(int sig){
 	my_bot.terminate();
@@ -42,7 +42,7 @@ void bot::initialize(){
 	m_modules.push_back(new joystickmodule());
 	m_modules.push_back(new imumodule());
 	m_modules.push_back(new arduinomodule("cfg/arduino1.cfg"));
-	m_modules.push_back(new cameramodule());
+//	m_modules.push_back(new cameramodule());
 	m_modules.push_back(new debugmodule(&std::cout));
 	motormodule* mm = new motormodule();
 	navigationmodule* nm = new navigationmodule(&(mm->m_ctrl));

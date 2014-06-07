@@ -17,7 +17,7 @@
 
 	void motormodule::manageMotors(){
 		int dev_fd;
-		dev_fd = openSerialPort(dev_name,9600,PARENB,0);	
+		dev_fd = openSerialPort(dev_name,9600,PARENB,0,CS7);	
 		if(dev_fd == -1)
 		{
 			Logger::log(m_moduleid,LOGGER_ERROR,"Motors serial usb adapter not found!");
@@ -41,7 +41,7 @@
 			write(dev_fd,buff,5);
 			sprintf(buff,MOVE_QUERY,RIGHT,right_power);
 			write(dev_fd,buff,5);
-			sleepms(1);
+			sleepms(50);
 			//13 for echo, 6 for voltage, 4 for motors
 			int n =read(dev_fd,buff,13+6+4);
 			if(n==0){
