@@ -34,7 +34,6 @@ void navigationmodule::navigate() {
 void navigationmodule::updatePos() {
   if (modifiedGPS && modifiedIMU) {
     // kalman filter here
-    
   }
   modifiedGPS = false;
   modifiedIMU = false;
