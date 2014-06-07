@@ -35,12 +35,12 @@ make
 sudo make install
 
 echo "Getting V4L..."
-sudo mkdir -p $V4L_LOCATION
-sudo chown $USER $V4L_LOCATION
-cd $V4L_LOCATION
-wget http://www.linuxtv.org/downloads/v4l-utils/v4l-utils-0.8.8.tar.bz2
-tar xvf v4l-utils-0.8.8.tar.bz2
-cd v4l-utils-0.8.8
+#sudo mkdir -p $V4L_LOCATION
+#sudo chown $USER $V4L_LOCATION
+#cd $V4L_LOCATION
+#wget http://www.linuxtv.org/downloads/v4l-utils/v4l-utils-0.8.8.tar.bz2
+#tar xvf v4l-utils-0.8.8.tar.bz2
+#cd v4l-utils-0.8.8
 make
 sudo make install
 sudo apt-get -y install v4l-utils libv4l-0 libv4l-dev
@@ -55,13 +55,13 @@ sudo apt-get install xboxdrv -y
 echo "Installing opencv..."
 sudo mkdir -p $OPENCV_LOCATION
 sudo chown $USER $OPENCV_LOCATION
-cd $OPENCV_LOCATION
-if [ -e .git ]
+if [ -e $OPENCV_LOCATION/.git ]
 then
 	echo "already have opencv!"
 else	
-	git clone https://github.com/Itseez/opencv.git .
+	git clone https://github.com/Itseez/opencv.git $OPENCV_LOCATION
 fi
+cd $OPENCV_LOCATION
 git checkout 2.4.9 #switch to stable release
 mkdir -p build
 cd build 

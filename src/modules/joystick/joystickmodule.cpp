@@ -8,6 +8,7 @@
 #include <linux/joystick.h>
 #include "logger.h"
 #include <string.h>
+#include <unistd.h>
 	void* joystickmodule::thread(void* args){
 		joystickmodule* module = (joystickmodule*)args;
 		module->running=true;
