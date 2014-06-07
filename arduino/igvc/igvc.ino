@@ -18,7 +18,7 @@ Use defines to allow certain devices to be handled by this arduino.
 */
 
 #define RAZORIMU
-
+#define MOTORS
 
 /*
 ====DEVICE CONFIG====
@@ -38,7 +38,7 @@ Determines which device to forward messages to. Tag is basically first char of c
 */
 
 #define TAG_RAZORIMU 'R'
-
+#define TAG_MOTORS   'M'
 
 
 
@@ -55,7 +55,13 @@ void setup()
   // Init serial output
   Serial.begin(BAUD_RATE);
     // Init sensors
-  Razor::initialize();
+  #ifdef RAZORIMU
+    Razor::initialize();
+  #endif
+  
+  #ifdef MOTORS
+    Motors::initialize();
+  #endif
   numRead=0;
 }
 
@@ -89,7 +95,9 @@ void updateDevices(){
         Razor::update();
      #endif
      
-     
+     #ifdef MOTORS
+        Motors::update();
+     #endif
   
 }
 
@@ -103,4 +111,9 @@ void procInput(){
        }
      #endif
      
+     #ifdef MOTORS
+       if(buffer[0]==TAG_MOTORS){
+         Motors::input(buffer,numRead); 
+       }
+     #endif
 }

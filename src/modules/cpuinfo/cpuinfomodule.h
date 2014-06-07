@@ -19,6 +19,7 @@ private:
 	int m_statfd;
 	int m_meminfofd;
 	int m_netfd;
+	volatile bool running;
 	long convertMultiplier(char* tmp);
 	void readCPU();
 	void readMEM();
@@ -44,6 +45,7 @@ public:
 		return myName;
 	}
 	cpuinfomodule(){
+		running=true;
 		this->m_refreshrate=CPU_DEFAULT_REFRESHRATE;
 		m_dataArrived=false;
 		m_cpudata.m_cpus= m_cpudata.m_interfaces=0;

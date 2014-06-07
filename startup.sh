@@ -1,7 +1,15 @@
-./startup_scripts/camera.sh
+
 ./startup_scripts/joystick.sh
+
+
+
 # run the file
 
-./robot
 
+
+sleep 4s
+./robot &
+
+sleep 5s
+./startup_scripts/camera.sh
 

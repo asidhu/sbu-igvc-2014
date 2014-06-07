@@ -6,7 +6,9 @@
 #include "modules/motors/motorctrl.h"
 #include "modules/gps/gpsdata.h"
 #include "modules/imu/imudata.h"
-	/**
+#include "modules/arduino/arduinodata.h"	
+#include <stdlib.h>
+/**
 		rules of module ettiquette:
 		1) only create a thread if you are reading from a file, doing io actions, socket ops, sleeping, blocking OR intensive calculations being performed. (AKA camera manipulation operations, intense geometric operations, anything greater than 5 ms worth of time)
 		2) all threads should be monitored and kept track of and cleaned up when asked to.
@@ -36,7 +38,13 @@
 		3) clean up any data from your previously published events (event objects are deleted after they are pushed be careful about that).
 	**/
 	void navigationmodule::update(bot_info* data){
-	
+		if(initializeMotors){
+			arduinocmd* cmd = (arduinocmd*)malloc(sizeof(arduinocmd));
+			cmd->arduino_flag = FLAG_RESET_MOTORS;
+			event* evt = makeEvent(EFLAG_ARDUINOCMD,cmd);
+			data->m_eventQueue.push_back(evt);	
+			initializeMotors=false;
+		}	
 	}
 	/**
 		Rules:
@@ -65,6 +73,9 @@
 	void navigationmodule::processJSEvent(joystickevent* evt){
 		switch(evt->type){
 			case BUTTON_SAFETY:
+				if(m_motors->offline){
+					initializeMotors=true;	
+				}
 				m_motors->safety = evt->btnValue==0;
 				m_motors->left_power = m_motors->right_power = m_motors->throttle =0;
 			break;

@@ -106,21 +106,24 @@
 
 	void* cpuinfomodule::thread(void* args){
 		cpuinfomodule* module = (cpuinfomodule*) args;
-		while(true){
+		module->m_statfd = open("/proc/stat",O_RDONLY);
+		module->m_meminfofd = open("/proc/meminfo",O_RDONLY);
+		module->m_netfd = open("/proc/net/dev",O_RDONLY);
+		while(module->running){
 			sleepms(module->m_refreshrate);
 			module->readCPU();
 			module->readMEM();
 			module->readNET();
 			module->m_dataArrived=true;
 		}
+		close(module->m_statfd);
+		close(module->m_meminfofd);
+		close(module->m_netfd);
 		return NULL;			
 	}
 
 	void cpuinfomodule::initializeCPUReader(){
 		spawnThread(cpuinfomodule::thread, this);
-		m_statfd = open("/proc/stat",O_RDONLY);
-		m_meminfofd = open("/proc/meminfo",O_RDONLY);
-		m_netfd = open("/proc/net/dev",O_RDONLY);
 		m_dataArrived=false;
 	}
 	/**
@@ -182,7 +185,8 @@
 		
 	**/
 	void cpuinfomodule::pushEvent(event* evt){
-		
+		if(evt->m_eventflag== EFLAG_TERMINATE)
+			running=false;		
 	}
 
 const char* cpuinfomodule::myName="CPUInfo Module";

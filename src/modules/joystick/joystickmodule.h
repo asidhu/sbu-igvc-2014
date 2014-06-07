@@ -34,8 +34,8 @@ class joystickmodule:public module{
 		m_event_pool.pop_back();
 		return ret;
 	}
+	volatile bool running;
 	public:
-	bool polling;
 	int calibration;
 	void initialize(uint32&);
 	void update(bot_info*);

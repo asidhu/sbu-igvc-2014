@@ -3,6 +3,7 @@
 #include "basetypes.h"
 #include "oscompat.h"
 #include "module.h"
+#include "base.h"
 #include <iostream>
 class event{
 	private:
@@ -23,6 +24,7 @@ class event{
 	void* m_data;
 	void (*m_print)(std::ostream& out, const event* evt);
 	friend class module;
+	friend class bot;
 };
 std::ostream& operator<<(std::ostream& out, const event* mc);
 

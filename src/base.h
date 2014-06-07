@@ -14,10 +14,14 @@ class bot{
 	void addListener(module*,uint32);
 	void dispatchEvent(event*);
 	void dispatchToList(std::vector<module*>&, event*);
+	bool terminateSelf, terminateSignalSent;
 	public:
 	void initialize();
 	void mainLoop();
+	void terminate();
 	bot(){
+		terminateSelf=false;
+		terminateSignalSent=false;
 		m_modules.clear();
 		for(int i=0;i<MAX_LISTENER_LISTS;i++)
 			m_module_listeners[i].clear();
