@@ -19,7 +19,7 @@ Use defines to allow certain devices to be handled by this arduino.
 
 #define RAZORIMU
 #define MOTORS
-
+#define GPS_TOGGLE
 /*
 ====DEVICE CONFIG====
 Device specific configuration.
@@ -45,7 +45,8 @@ Determines which device to forward messages to. Tag is basically first char of c
 
 #include <Wire.h>
 #include "RazorIMU.h"
-
+#include "Motors.h"
+#include "GPS.h"
 
 char buffer[BUFFERLENGTH];
 int numRead;
@@ -57,6 +58,10 @@ void setup()
     // Init sensors
   #ifdef RAZORIMU
     Razor::initialize();
+  #endif
+  
+  #ifdef GPS_TOGGLE
+    GPSNAMESPACE::initialize();
   #endif
   
   #ifdef MOTORS
@@ -94,11 +99,10 @@ void updateDevices(){
      #ifdef RAZORIMU
         Razor::update();
      #endif
-     
-     #ifdef MOTORS
-        Motors::update();
-     #endif
   
+     #ifdef GPS_TOGGLE
+        GPSNAMESPACE::update();
+     #endif
 }
 
 

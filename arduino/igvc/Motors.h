@@ -6,7 +6,6 @@ namespace Motors{
 Config: Motors reset setup gpio pin
 
 */
-#define Motors::update() ;
 int motor_reset_pin=8;
 
   
