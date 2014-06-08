@@ -4,10 +4,11 @@
 #include "base.h"
 #include "osutils.h"
 #include "event_flag.h"
-#include "Adafruit_GPS.h"
 #include <iostream>
-
-
+#include "logger.h"
+#include "modules/arduino/arduinodata.h"
+#include "modules/arduino/arduinotags.h"
+#include <cstdio>
 /**
    rules of module ettiquette:
    1) only create a thread if you are reading from a file, doing io actions, socket ops, sleeping, blocking OR intensive calculations being performed. (AKA camera manipulation operations, intense geometric operations, anything greater than 5 ms worth of time)
@@ -63,10 +64,10 @@ void gpsmodule::pushEvent(event* evt){
   const char* ELEV_FORMAT = "GPS%d,E,%f";          // elevation
   const char* SAT_FORMAT = "GPS%d,N,%d";           // num satelltes
   //read and parse event and create another event to push in next update.
-  if (evt->m_event_flag & EFLAG_GPSRAW && 
-      evt->m_event_flag & EFLAG_ARDUINORAW) {
+  if (evt->m_eventflag & EFLAG_GPSRAW && 
+      evt->m_eventflag & EFLAG_ARDUINORAW) {
     arduinodata* data = (arduinodata*)(evt->m_data);
-    int num_gps = gps_data->num_gps;
+    int num_gps = m_gpsdata.num_gps;
     if (data->data[0]==ARDUINO_TAG_GPS) {
       int gps_id; // which of the 3 GPS units sent data
       
@@ -117,9 +118,9 @@ void gpsmodule::pushEvent(event* evt){
 		   &latitude, &latitude_dir,
 		   &longitude, &longitude_dir) == 5) {
 	  m_gpsdata.gps[gps_id].latitude = latitude *
-	    (latitude_dir == 'S' | latitude_dir == 's' ? -1 : 1);
+	    ((latitude_dir == 'S' || latitude_dir == 's') ? -1 : 1);
 	  m_gpsdata.gps[gps_id].longitude = longitude * 
-	    (longitude_dir == 'W' | longitude_dir == 'w' ? -1 : 1);
+	    ((longitude_dir == 'W' || longitude_dir == 'w') ? -1 : 1);
 	  m_dataArrived=true;
 	} else {
 	  Logger::log(m_moduleid,LOGGER_WARNING,
@@ -151,9 +152,9 @@ void gpsmodule::pushEvent(event* evt){
 
       case ARDUINO_PROTOCOL_ELEV:
 	float elevation;
-	if (sscanf(data->data, ELEVATION_FORMAT, &gps_id, &elevation) 
+	if (sscanf(data->data, ELEV_FORMAT, &gps_id, &elevation) 
 	    == 2) {
-	  m_gpsdata.gps[gps_id].alititude = elevation;
+	  m_gpsdata.gps[gps_id].altitude = elevation;
 	  m_dataArrived=true;
 	} else {
 	  Logger::log(m_moduleid,LOGGER_WARNING,
@@ -163,7 +164,7 @@ void gpsmodule::pushEvent(event* evt){
 
       case ARDUINO_PROTOCOL_SAT:
 	int numSatellites;
-	if (sscanf(data->data, NUMSATELLITES_FORMAT, 
+	if (sscanf(data->data, SAT_FORMAT, 
 		   &gps_id, &numSatellites) == 2) {
 	  m_gpsdata.gps[gps_id].numSatellites = numSatellites;
 	  m_dataArrived=true;
