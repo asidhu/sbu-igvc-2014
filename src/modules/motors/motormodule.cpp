@@ -50,7 +50,7 @@
 			else{
 				m_ctrl.offline=false;
 				buff[n]=0;
-			//	Logger::log(m_moduleid,LOGGER_INFO,"Motor reply:%s",buff);	
+				Logger::log(m_moduleid,LOGGER_INFO,"Motor reply:%s",buff);	
 			}
 		}
 		close(dev_fd);

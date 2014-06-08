@@ -17,9 +17,9 @@
  Use defines to allow certain devices to be handled by this arduino.
  */
 
-#define RAZORIMU
+//#define RAZORIMU
 #define MOTORS
-#define GPS_TOGGLE
+//#define GPS_TOGGLE
 /*
 ====DEVICE CONFIG====
  Device specific configuration.
@@ -55,7 +55,7 @@ char buffer[BUFFERLENGTH];
 int numRead;
 
 int led_mode;
-int led_timer;
+unsigned long led_timer;
 void setup()
 {
   // Init serial output
@@ -88,7 +88,7 @@ void loop()
 {
 
 
-  if(Serial.available()){
+  /*if(Serial.available()){
     char num = Serial.readBytesUntil(EOLCHAR,buffer+numRead,BUFFERLENGTH-numRead);
     numRead+=num;
     if(buffer[numRead]==EOLCHAR){
@@ -96,7 +96,7 @@ void loop()
       procInput();
 
     }
-  } 
+  } */
   updateDevices();
 
   delay(SLEEPTIME);
@@ -117,16 +117,18 @@ void updateDevices(){
     digitalWrite(LED_PIN,LOW);
   else if( led_mode==2){
      digitalWrite(LED_PIN,LOW);
-     if(millis()-led_timer>1000){
+     if(millis()-led_timer>1000 || millis()<led_timer){
         led_timer = millis();
          led_mode=3;
+         Serial.println(led_timer);
      } 
   }
   else if( led_mode==3){
      digitalWrite(LED_PIN,HIGH);
-     if(millis()-led_timer>1000){
+     if(millis()-led_timer>1000 || millis()<led_timer){
         led_timer = millis();
          led_mode=2;
+         Serial.println(led_timer);
      } 
   }
 
