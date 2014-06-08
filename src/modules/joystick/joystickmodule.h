@@ -41,6 +41,8 @@ class joystickmodule:public module{
 	void update(bot_info*);
 	void pushEvent(event* );
 	void pollEvents();
+	void loadConfig();
+	void saveConfig();
 	void calibrateJoyStick(int jd_dev);
 	static void* thread(void* args);
 	const char* getCommonName(){

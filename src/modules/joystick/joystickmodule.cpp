@@ -9,10 +9,15 @@
 #include "logger.h"
 #include <string.h>
 #include <unistd.h>
+#include <rapidxml/rapidxml.hpp>
+#include <rapidxml/rapidxml_print.hpp>
+#include <cstdlib>
+#include <cstdio>
 	void* joystickmodule::thread(void* args){
 		joystickmodule* module = (joystickmodule*)args;
 		module->running=true;
 		module->calibration =0;
+		module->loadConfig();
 		strcpy(module->m_cfg.dev_name,"/dev/input/js0");
 		module->pollEvents();
 		return NULL;
@@ -255,7 +260,81 @@
 			}
 			++calibration;
 		}
+		saveConfig();
 	}
 
+
+void joystickmodule::loadConfig(){
+	using namespace rapidxml;
+	char buff[4096];
+	long sz=4096;
+	readFile("cfg/joystick.cfg",buff,sz);
+	buff[sz]=0;
+	if(sz<=0){
+		Logger::log(m_moduleid,LOGGER_WARNING,"Joystick configuration not found...");
+		return;
+	}
+	xml_document<> doc;
+	doc.parse<0>(buff);
+	xml_node<> *body = doc.first_node();
+	xml_node<> *forward = body->first_node();
+	xml_node<> *backward = forward->next_sibling();
+	xml_node<> *safety = backward->next_sibling();
+	xml_node<> *rlctrl = safety->next_sibling();
+	xml_node<> *rrctrl =rlctrl->next_sibling();
+	xml_node<> *throttle =rrctrl->next_sibling();
+	xml_node<> *throttlemin =throttle->next_sibling();
+	xml_node<> *throttlemax =throttlemin->next_sibling();
+	m_cfg.forward = (char)atoi(forward->value());	
+	m_cfg.backwards = (char)atoi(backward->value());	
+	m_cfg.rotate_left = (char)atoi(rlctrl->value());	
+	m_cfg.rotate_right = (char)atoi(rrctrl->value());	
+	m_cfg.safety = (char)atoi(safety->value());	
+	m_cfg.lt.id = (char)atoi(throttle->value());	
+	m_cfg.lt.min = atoi(throttlemin->value());	
+	m_cfg.lt.max = atoi(throttlemax->value());	
+	Logger::log(m_moduleid,LOGGER_INFO,"Joystick configuration loaded.");
+	calibration=8;
+}
+
+void joystickmodule::saveConfig(){
+	using namespace rapidxml;
+	xml_document<> doc;
+	const char* name = "joystick",
+		*fctrl = "forward",
+		*bctrl = "backward",
+		*rrctrl= "rotateright",
+		*rlctrl= "rotateleft",
+		*safety = "safety",
+		*throttle = "throttle",
+		*throttlemin = "throttlemin",
+		*throttlemax = "throttlemax";
+	xml_node<> *body = doc.allocate_node(node_element,name);
+	doc.append_node(body);
+	char buff[64];
+	sprintf(buff,"%d",m_cfg.forward);
+	body->append_node( doc.allocate_node(node_element,fctrl,doc.allocate_string(buff)));
+	sprintf(buff,"%d",m_cfg.backwards);
+	body->append_node( doc.allocate_node(node_element,bctrl,doc.allocate_string(buff)));
+	sprintf(buff,"%d",m_cfg.safety);
+	body->append_node( doc.allocate_node(node_element,safety,doc.allocate_string(buff)));
+	sprintf(buff,"%d",m_cfg.rotate_left);
+	body->append_node( doc.allocate_node(node_element,rlctrl,doc.allocate_string(buff)));
+	sprintf(buff,"%d",m_cfg.rotate_right);
+	body->append_node( doc.allocate_node(node_element,rrctrl,doc.allocate_string(buff)));
+	sprintf(buff,"%d",m_cfg.lt.id);
+	body->append_node( doc.allocate_node(node_element,throttle,doc.allocate_string(buff)));
+	sprintf(buff,"%d",m_cfg.lt.min);
+	body->append_node( doc.allocate_node(node_element,throttlemin,doc.allocate_string(buff)));
+	sprintf(buff,"%d",m_cfg.lt.max);
+	body->append_node( doc.allocate_node(node_element,throttlemax,doc.allocate_string(buff)));
+
+	char writebuff[2048];
+	char* end = print(writebuff,doc,0);
+	*end=0;
+	writeFile("cfg/joystick.cfg",writebuff,strlen(writebuff));
+	Logger::log(m_moduleid,LOGGER_INFO,"Joystick configuration saved.");
+		
+}
 
 const char* joystickmodule::myName="Joystick Module";
