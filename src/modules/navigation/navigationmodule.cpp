@@ -1,3 +1,4 @@
+#include "logger.h"
 #include "modules/navigation/navigationmodule.h"
 #include "event.h"
 #include "base.h"
@@ -35,6 +36,7 @@
 		currentWaypoint->lat=42.67816288333;
 		//currentWaypoint->lon=
 		currentWaypoint->nextWaypoint=NULL;
+		auto1_down=auto2_down=0;
 		spawnThread(navigationmodule::thread,this);
 	}
 
@@ -52,7 +54,20 @@
 			event* evt = makeEvent(EFLAG_ARDUINOCMD,cmd);
 			data->m_eventQueue.push_back(evt);	
 			initializeMotors=false;
+		}
+		if(m_navmode ==MODE_MANUAL){
+			arduinocmd* cmd = (arduinocmd*)malloc(sizeof(arduinocmd));
+			cmd->arduino_flag = FLAG_LEDS_ON;
+			event* evt = makeEvent(EFLAG_ARDUINOCMD,cmd);
+			data->m_eventQueue.push_back(evt);	
+
 		}	
+		if(m_navmode ==MODE_AUTONOMOUS){
+			arduinocmd* cmd = (arduinocmd*)malloc(sizeof(arduinocmd));
+			cmd->arduino_flag = FLAG_LEDS_FLASH;
+			event* evt = makeEvent(EFLAG_ARDUINOCMD,cmd);
+			data->m_eventQueue.push_back(evt);	
+		}
 	}
 	/**
 		Rules:
@@ -63,11 +78,7 @@
 	void navigationmodule::pushEvent(event* evt){
 		switch(evt->m_eventflag){
 			case EFLAG_JOYSTICKEVT:
-				if(m_navmode == MODE_MANUAL){
-					joystickevent* event = (joystickevent*)evt->m_data;
-					processJSEvent(event);
-						
-				}
+					processJSEvent((joystickevent*)evt->m_data);
 			break;
 			case EFLAG_IMUDATA:
                  	processIMUEvent((imudata*)evt->m_data);
@@ -76,11 +87,35 @@
 			case EFLAG_GPSDATA:
 			processGPSEvent((gpsdata*)evt->m_data);		
 			break;
+			case EFLAG_TERMINATE:
+			running=false;
+			break;
 		}	
 	}
 	
 	void navigationmodule::processJSEvent(joystickevent* evt){
+		if(m_navmode==MODE_AUTONOMOUS && (evt->type != BUTTON_AUTO1
+			|| evt->type != BUTTON_AUTO2))
+			return; 
 		switch(evt->type){
+			case BUTTON_AUTO1:
+				auto1_down=evt->btnValue;
+			case BUTTON_AUTO2:
+				if(evt->type==BUTTON_AUTO2)
+					auto2_down=evt->btnValue;
+				if(auto1_down && auto2_down){
+					if(m_navmode == MODE_MANUAL){
+						m_navmode= MODE_AUTONOMOUS;
+						auto1_down=auto2_down=0;
+						Logger::log(m_moduleid,LOGGER_INFO,"Switching to Autonomous Mode...");
+					}
+					if(m_navmode == MODE_AUTONOMOUS){
+						m_navmode= MODE_MANUAL;
+						auto1_down=auto2_down=0;
+						Logger::log(m_moduleid,LOGGER_INFO,"Switching to Manual Mode...");
+					}
+				}
+			break;
 			case BUTTON_SAFETY:
 				if(m_motors->offline){
 					initializeMotors=true;	
@@ -143,14 +178,15 @@
 	{
          while(running)
          {
-               if(modified)
+               if(modified && m_navmode == MODE_AUTONOMOUS)
                {
                  modified=false;
                  float angleToWaypoint=angle(currentLat,currentLon,currentWaypoint->lat,currentWaypoint->lon);
                  angleToWaypoint*=-1;
                  angleToWaypoint+=90;
                  float difference=angleToWaypoint-currentHeading;
-                 if (difference>2)
+                 Logger::log(m_moduleid,LOGGER_INFO,"Angle to Waypoint: %f Heading: %f",angleToWaypoint,currentHeading);
+		 if (difference>2)
                  {
                     if (difference<180)
                     {

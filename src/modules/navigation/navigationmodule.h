@@ -25,7 +25,7 @@ class navigationmodule:public module{
     volatile bool modified;
 	volatile bool running;
 	waypointdata* currentWaypoint;
-	
+	int auto1_down,auto2_down;	
 	public:
 	int m_navmode;
 	void initialize(uint32&);
