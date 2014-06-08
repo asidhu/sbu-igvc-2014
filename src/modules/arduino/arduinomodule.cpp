@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <cstring>
+#include "logger.h"
 	void* arduinomodule::thread(void* args){
 		arduinomodule* module = (arduinomodule*) args;
 		module->m_device = openSerialPort(module->path,115200,0,0);
@@ -51,6 +52,7 @@
 					//lets construct an event and push it out.
 					arduinodata* data = getArduinoData();
 					memcpy(data->data,buffer,i);
+					Logger::log(m_moduleid,LOGGER_INFO,data->data);
 					switch(data->data[0]){
 						case ARDUINO_TAG_IMU:
 							data->eflag = EFLAG_IMURAW;

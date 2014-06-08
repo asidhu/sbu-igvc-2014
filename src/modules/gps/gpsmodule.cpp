@@ -57,6 +57,7 @@ void gpsmodule::printEvent(std::ostream& out, const event* evt){
 void gpsmodule::update(bot_info* data){
   uint64 timegap = data->m_currentTime - m_last_report_time;
   //after receiving event, parse it, and push to world.
+  Logger::log(m_moduleid,LOGGER_INFO,"timegap: %d",timegap); 
   if(m_dataArrived && timegap > GPS_REPORT_INTERVAL){
     event* evt = this->makeEvent(EFLAG_GPSDATA,&m_gpsdata);
     evt->m_print= gpsmodule::printEvent;
@@ -85,6 +86,7 @@ void gpsmodule::pushEvent(event* evt){
       evt->m_eventflag & EFLAG_ARDUINORAW) {
     arduinodata* data = (arduinodata*)(evt->m_data);
     int num_gps = m_gpsdata.num_gps;
+  Logger::log(m_moduleid,LOGGER_INFO,data->data); 
     if (data->data[0]==ARDUINO_TAG_GPS) {
       int gps_id; // which of the 3 GPS units sent data
       
