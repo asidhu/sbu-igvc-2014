@@ -816,10 +816,8 @@ void readSensorsAndAnalyze(){
     if (timestamp > timestamp_old)
       Razor::G_Dt = (float) (timestamp - timestamp_old) / 1000.0f; // Real time of loop run. We use this on the DCM algorithm (gyro integration time)
     else Razor::G_Dt = 0;
-  
     Razor::read_sensors();
     Razor::compensate_sensor_errors();
-    
       // Run DCM algorithm
       Razor::Compass_Heading(); // Calculate magnetic heading
       Razor::Matrix_update();
@@ -866,7 +864,7 @@ void getAccel(float * aout){
 
 
 void update(){
-  if((millis() - timestamp) >= 20)
+  if(abs(millis() - timestamp) >= 50)
   {
     timestamp_old = timestamp;
     timestamp = millis();

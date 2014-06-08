@@ -59,7 +59,7 @@ void Logger::log(int moduleID, int level, const char* format, ...){
 	va_end(a_list);
 	snprintf(buffer2,4096,"%s: %s \n\r", m_modules->at(moduleID)->getCommonName(),buffer);
 	if(initialized)
-		appendFile(loggerFile, buffer2, strlen(buffer));
+		appendFile(loggerFile, buffer2, strlen(buffer2));
 
 	printf(buffer2);
 }

@@ -7,7 +7,7 @@
  */
 #define EOLCHAR '\n'
 #define BUFFERLENGTH 256
-#define SLEEPTIME 10
+#define SLEEPTIME 50
 #define BAUD_RATE 115200
 
 
@@ -20,6 +20,7 @@
 //#define RAZORIMU
 #define MOTORS
 //#define GPS_TOGGLE
+#define LEDS_TOGGLE
 /*
 ====DEVICE CONFIG====
  Device specific configuration.
@@ -28,6 +29,7 @@
  
  */
 
+#define MOTOR_PIN 8
 #define LED_PIN 13
 
 
@@ -50,16 +52,16 @@
 #include "RazorIMU.h"
 #include "Motors.h"
 #include "GPS.h"
+#include "LEDS.h"
 
 char buffer[BUFFERLENGTH];
 int numRead;
 
-int led_mode;
-unsigned long led_timer;
 void setup()
 {
   // Init serial output
   Serial.begin(BAUD_RATE);
+  Serial.setTimeout(20);
   // Init sensors
 #ifdef RAZORIMU
   Razor::initialize();
@@ -72,14 +74,15 @@ void setup()
 #ifdef MOTORS
   Motors::initialize();
 #endif
-  pinMode(LED_PIN,OUTPUT);
-  digitalWrite(LED_PIN,HIGH);
-  led_mode =2;
+
+#ifdef LEDS_TOGGLE
+  LEDS::initialize();
+#endif
   numRead=0;
 }
 
 
-void procInput();
+void procInput(char*, int);
 
 void updateDevices();
 
@@ -88,17 +91,18 @@ void loop()
 {
 
 
-  /*if(Serial.available()){
-    char num = Serial.readBytesUntil(EOLCHAR,buffer+numRead,BUFFERLENGTH-numRead);
-    numRead+=num;
-    if(buffer[numRead]==EOLCHAR){
-      buffer[numRead]=0;
-      procInput();
-
+  if(Serial.available()){
+    char num = Serial.readBytes(buffer+numRead,BUFFERLENGTH-numRead);
+    int last=0;
+    for(int i=numRead;i<numRead+num;i++){
+      if(buffer[i]==EOLCHAR){
+      procInput(buffer+last,i-last);
+      last=i;
+      }
     }
-  } */
+    numRead=0;
+  } 
   updateDevices();
-
   delay(SLEEPTIME);
 }
 
@@ -111,33 +115,16 @@ void updateDevices(){
 #ifdef GPS_TOGGLE
   GPSNAMESPACE::update();
 #endif
-  if(led_mode==0)
-    digitalWrite(LED_PIN,HIGH);
-  else if(led_mode==1)
-    digitalWrite(LED_PIN,LOW);
-  else if( led_mode==2){
-     digitalWrite(LED_PIN,LOW);
-     if(millis()-led_timer>1000 || millis()<led_timer){
-        led_timer = millis();
-         led_mode=3;
-         Serial.println(led_timer);
-     } 
-  }
-  else if( led_mode==3){
-     digitalWrite(LED_PIN,HIGH);
-     if(millis()-led_timer>1000 || millis()<led_timer){
-        led_timer = millis();
-         led_mode=2;
-         Serial.println(led_timer);
-     } 
-  }
+
+#ifdef LEDS_TOGGLE
+  LEDS::update();
+#endif
 
 }
 
 
 
-void procInput(){
-
+void procInput(char* buffer, int numRead){
 #ifdef RAZORIMU
   if(buffer[0]==TAG_RAZORIMU){
     Razor::input(buffer,numRead); 
@@ -149,17 +136,9 @@ void procInput(){
     Motors::input(buffer,numRead); 
   }
 #endif
- 
-#ifdef LED_DEVICE
-  if(buffer[0] == TAG_LED){
-	if(buffer[1] == TAG_LEDON){
-		led_mode=1;
-	}else if(buffer[1]==TAG_LEDOFF){
-		led_mode=0;
-	}else if(buffer[1]==TAG_LEDFLASH){
-		led_mode=2;
-		led_timer=millis();
-	}
+#ifdef LEDS_TOGGLE
+ if(buffer[0]==TAG_LED){
+   LEDS::input(buffer,numRead); 
   }
 #endif 
 }

@@ -52,7 +52,6 @@
 					//lets construct an event and push it out.
 					arduinodata* data = getArduinoData();
 					memcpy(data->data,buffer,i);
-					Logger::log(m_moduleid,LOGGER_INFO,data->data);
 					switch(data->data[0]){
 						case ARDUINO_TAG_IMU:
 							data->eflag = EFLAG_IMURAW;

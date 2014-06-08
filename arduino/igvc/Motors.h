@@ -6,23 +6,23 @@ namespace Motors{
 Config: Motors reset setup gpio pin
 
 */
-int motor_reset_pin=8;
 
   
   
 void initialize(){
    delay(100);
-   pinMode(motor_reset_pin,OUTPUT);
-   digitalWrite(motor_reset_pin,HIGH);
+   pinMode(MOTOR_PIN,OUTPUT);
+   digitalWrite(MOTOR_PIN,HIGH);
 }
 
 
 void input(char* data, int len){
-    digitalWrite(motor_reset_pin,HIGH);
+  Serial.println("RESET");
+    digitalWrite(MOTOR_PIN,HIGH);
     delay(500);
-    digitalWrite(motor_reset_pin,LOW);
+    digitalWrite(MOTOR_PIN,LOW);
     delay(500);
-    digitalWrite(motor_reset_pin,HIGH);
+    digitalWrite(MOTOR_PIN,HIGH);
 }
 
 }

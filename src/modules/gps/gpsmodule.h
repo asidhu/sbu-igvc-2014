@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cmath>
 
-#define GPS_REPORT_INTERVAL     1000000 // in us
+#define GPS_REPORT_INTERVAL     10000 // in us
 #define ARDUINO_PROTOCOL_TIME   'T'  
 #define ARDUINO_PROTOCOL_DATE   'D'
 #define ARDUINO_PROTOCOL_FIX    'F'

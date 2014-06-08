@@ -8,7 +8,7 @@
 #include "modules/arduino/arduinotags.h"
 #include "logger.h"
 #include <cstdio>
-
+#include <cmath>
 
 	/**
 		rules of module ettiquette:
@@ -41,7 +41,7 @@
 		3) clean up any data from your previously published events (event objects are deleted after they are pushed be careful about that).
 	**/
 	void imumodule::update(bot_info* data){
-		uint64 timegap = data->m_currentTime - m_last_report_time;
+		uint64 timegap = std::abs(data->m_currentTime - m_last_report_time);
 		//after receiving event, parse it, and push to world.
 		if(m_dataArrived && timegap > IMU_REPORT_INTERVAL){
 			event* evt = this->makeEvent(EFLAG_IMUDATA,&m_imudata);

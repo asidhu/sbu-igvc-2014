@@ -6,7 +6,7 @@
 #include "basetypes.h"
 
 
-#define IMU_REPORT_INTERVAL   		1000000//in us
+#define IMU_REPORT_INTERVAL   		10000//in us
 #define ARDUINO_PROTOCOL_HEADING	'H'
 #define ARDUINO_PROTOCOL_ACCEL	 	'A'
 #define ARDUINO_PROTOCOL_GYRO 		'G'
