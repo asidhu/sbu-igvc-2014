@@ -2,12 +2,16 @@
 #include "event.h"
 #include "base.h"
 #include "event_flag.h"
+#include "osutils.h"
 #include "modules/joystick/joystickmodule.h"
 #include "modules/motors/motorctrl.h"
 #include "modules/gps/gpsdata.h"
+#include "modules/gps/gpsmodule.h"
 #include "modules/imu/imudata.h"
 #include "modules/arduino/arduinodata.h"	
+#include "modules/navigation/waypointdata.h"
 #include <stdlib.h>
+#include <cmath>
 /**
 		rules of module ettiquette:
 		1) only create a thread if you are reading from a file, doing io actions, socket ops, sleeping, blocking OR intensive calculations being performed. (AKA camera manipulation operations, intense geometric operations, anything greater than 5 ms worth of time)
@@ -28,6 +32,10 @@
 		listener_flag|=	EFLAG_JOYSTICKEVT;
 		//Get GPS and IMU events for localization and pose estimation
 		listener_flag|= EFLAG_GPSDATA | EFLAG_IMUDATA;
+		currentWaypoint->lat=42.67816288333;
+		currentWaypoint->lon=
+		currentWaypoint->nextWaypoint=NULL;
+		spawnThread(navigationmodule::thread,this);
 	}
 
 
@@ -62,6 +70,7 @@
 				}
 			break;
 			case EFLAG_IMUDATA:
+                 processIMUEvent((imudata*)evt->m_data);
 				
 			break;
 			case EFLAG_GPSDATA:
@@ -115,10 +124,68 @@
 	}
 
 	void navigationmodule::processIMUEvent(imudata*){
-
+         float tempHeading=imudate->heading;
+         tempHeading+=7.52;
+         if ((tempHeading-360)>=0)
+         {tempHeading-=360;}
+         currentHeading=tempHeading;
+         modified=true;
 	}
 	
+	void* navigationmodule::thread(void* args){
+		navigationmodule* module = (navigationmodule*)args;
+		module->running=true;
+		module->navigate();
+		return NULL;
+	}
+	
+	void navigate()
+	{
+         while(running)
+         {
+               if(modified)
+               {
+                 modified=false;
+                 float angleToWaypoint=angle(currentLat,currentLon,currentWaypoint->lat,currentWaypoint->lon);
+                 angleToWaypoint*=-1;
+                 angleToWaypoint+=90;
+                 float difference=angleToWaypoint-currentHeading;
+                 if (difference>2)
+                 {
+                    if (difference<180)
+                    {
+                       m_motors->left_power = -1;
+					   m_motors->right_power = 1;
+                    }
+                    else 
+                    {
+                       m_motors->left_power = 1;
+					   m_motors->right_power = -1;
+                    }
+                  }  
+                 else if (difference<2)
+                 {
+                    if (difference>-180)
+                    {
+                       m_motors->left_power = 1;
+					   m_motors->right_power = -1;
+                    }
+                    else 
+                    {
+                       m_motors->left_power = -1;
+					   m_motors->right_power = 1;
+                    }
+                  } 
+                  difference=((float)abs((double)difference));
+                  if (difference>180)
+                  {difference=360-difference;}
+                  m_motors->throttle = ((difference/180)*0.5);
+               }  
+    }
+	
 	void navigationmodule::processGPSEvent(gpsdata*){
-
+         currentLat=gpsdata->latitude;
+         currentLon=gpsdata->longitude;
+         modified=true;
 	}
 const char* navigationmodule::myName="Navigation Module";
