@@ -9,6 +9,7 @@
 #include "modules/arduino/arduinodata.h"
 #include "modules/arduino/arduinotags.h"
 #include <cstdio>
+#include <cmath>
 /**
    rules of module ettiquette:
    1) only create a thread if you are reading from a file, doing io actions, socket ops, sleeping, blocking OR intensive calculations being performed. (AKA camera manipulation operations, intense geometric operations, anything greater than 5 ms worth of time)
@@ -166,7 +167,7 @@ void gpsmodule::pushEvent(event* evt){
 	int numSatellites;
 	if (sscanf(data->data, SAT_FORMAT, 
 		   &gps_id, &numSatellites) == 2) {
-	  m_gpsdata.gps[gps_id].numSatellites = numSatellites;
+	  m_gpsdata.gps[gps_id].numSatelites = numSatellites;
 	  m_dataArrived=true;
 	} else {
 	  Logger::log(m_moduleid,LOGGER_WARNING,
@@ -198,7 +199,7 @@ float toDegrees(float radians) {
 
 float distance(float lat1, float long1, float lat2, float long2) {
   float lat1_rad = toRadians(lat1);
-  float long2_rad = toRadians(long1)
+  float long1_rad = toRadians(long1);
   float lat2_rad = toRadians(lat2);
   float long2_rad = toRadians(long2);
 
@@ -210,7 +211,7 @@ float distance(float lat1, float long1, float lat2, float long2) {
 
 float angle(float lat1, float long1, float lat2, float long2) {
   float lat1_rad = toRadians(lat1);
-  float long2_rad = toRadians(long1)
+  float long1_rad = toRadians(long1);
   float lat2_rad = toRadians(lat2);
   float long2_rad = toRadians(long2);
 
@@ -222,7 +223,7 @@ float angle(float lat1, float long1, float lat2, float long2) {
 }
 
 float normalRadius(float phi) {
-  ecc_squared = 1 - pow(EARTH_SEMIMINOR, 2) / pow(EARTH_SEMIMAJOR, 2);
+  float ecc_squared = 1 - pow(EARTH_SEMIMINOR, 2) / pow(EARTH_SEMIMAJOR, 2);
   return (EARTH_SEMIMAJOR / sqrt(1 - ecc_squared * pow(sin(phi), 2)));
 }
 

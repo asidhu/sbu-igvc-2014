@@ -28,7 +28,7 @@
  
  */
 
-
+#define LED_PIN 13
 
 
 /*
@@ -39,7 +39,10 @@
 
 #define TAG_RAZORIMU 'R'
 #define TAG_MOTORS   'M'
-
+#define TAG_LED	     'L'
+#define TAG_LEDON    'O'
+#define TAG_LEDOFF   'D'
+#define TAG_LEDFLASH 'F'
 
 
 
@@ -51,6 +54,8 @@
 char buffer[BUFFERLENGTH];
 int numRead;
 
+int led_mode;
+int led_timer;
 void setup()
 {
   // Init serial output
@@ -67,6 +72,9 @@ void setup()
 #ifdef MOTORS
   Motors::initialize();
 #endif
+  pinMode(LED_PIN,OUTPUT);
+  digitalWrite(LED_PIN,HIGH);
+  led_mode =2;
   numRead=0;
 }
 
@@ -103,6 +111,25 @@ void updateDevices(){
 #ifdef GPS_TOGGLE
   GPSNAMESPACE::update();
 #endif
+  if(led_mode==0)
+    digitalWrite(LED_PIN,HIGH);
+  else if(led_mode==1)
+    digitalWrite(LED_PIN,LOW);
+  else if( led_mode==2){
+     digitalWrite(LED_PIN,LOW);
+     if(millis()-led_timer>1000){
+        led_timer = millis();
+         led_mode=3;
+     } 
+  }
+  else if( led_mode==3){
+     digitalWrite(LED_PIN,HIGH);
+     if(millis()-led_timer>1000){
+        led_timer = millis();
+         led_mode=2;
+     } 
+  }
+
 }
 
 
@@ -120,5 +147,18 @@ void procInput(){
     Motors::input(buffer,numRead); 
   }
 #endif
+ 
+#ifdef LED_DEVICE
+  if(buffer[0] == TAG_LED){
+	if(buffer[1] == TAG_LEDON){
+		led_mode=1;
+	}else if(buffer[1]==TAG_LEDOFF){
+		led_mode=0;
+	}else if(buffer[1]==TAG_LEDFLASH){
+		led_mode=2;
+		led_timer=millis();
+	}
+  }
+#endif 
 }
   

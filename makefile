@@ -1,6 +1,6 @@
 CC=gcc
 MAKE= make
-CFLAGS:=-lstdc++ -lpthread  -Wall -g
+CFLAGS:=-lstdc++ -lpthread -lm  -Wall -g
 INCLUDE:=-Isrc/ -Ilib/ -I/usr/include/  $(shell pkg-config --cflags opencv)
 MODULES = cpuinfo network arduino imu joystick navigation motors gps
 

@@ -4,8 +4,9 @@
 #include "logger.h"
 #include <sstream>
 #include <string>
+#include "event_flag.h"
 void debugmodule::initialize(uint32& flag){
-	flag=0xFFFFFFFF;
+	flag=EFLAG_GPSDATA;
 }
 
 void debugmodule::update(bot_info* data){
