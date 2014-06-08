@@ -26,11 +26,27 @@
 **/
 void gpsmodule::initialize(uint32& listener_flag){
   listener_flag |= EFLAG_GPSRAW;
+  m_gpsdata.num_gps = 3;
 }
 
 void gpsmodule::printEvent(std::ostream& out, const event* evt){
   gpsdata* gps = (gpsdata*)(evt->m_data);
-  out<< "gps:CPU:"<<std::endl;
+  out << "test" << std::endl;
+  for (int i = 0; i < gps->num_gps; i++) {
+    //out << "gps" << i << ":TIME " << gps->gps[i].time[0] << ":" <<
+      //gps->gps[i].time[1] << ":" <<  gps->gps[i].time[2] << "." << 
+      //gps->gps[i].time[3] << std::endl;
+    //out << "gps" << i << ":DATE " << gps->gps[i].date[0] << "/" << 
+      //gps->gps[i].date[1] << "/" << gps->gps[i].date[2] << std::endl;
+    out << "gps" << i << ":FIX " << (gps->gps[i].fix ? "yes" : "no") << 
+      " :QUALITY " << gps->gps[i].fix_quality << std::endl;
+    out << "gps" << i << ":NUMSATS " << gps->gps[i].numSatelites << std::endl;
+    out << "gps" << i << ":LOC " << gps->gps[i].latitude << ", " <<
+	gps->gps[i].longitude << std::endl;
+    out << "gps" << i << ":SPEED " << gps->gps[i].speed << std::endl;
+    out << "gps" << i << ":ANGLE " << gps->gps[i].angle << std::endl;
+    out << "gps" << i << ":ALT " << gps->gps[i].altitude << std::endl;
+  }
 }
 /**
    Rules:
@@ -90,7 +106,7 @@ void gpsmodule::pushEvent(event* evt){
       case ARDUINO_PROTOCOL_DATE:
 	int date[3];
 	if (sscanf(data->data, DATE_FORMAT, &gps_id, date) == 4) {
-	  for (int i = 0; i < 4; i++)
+	  for (int i = 0; i < 3; i++)
 	    m_gpsdata.gps[gps_id].date[i] = date[i];
 	  m_dataArrived=true;
 	} else {
@@ -231,12 +247,12 @@ float toX(float lat, float lon) {
   float phi = toRadians(lat);
   float lambda = toRadians(lon);
 
-  return normalRadius(lat) * cos(lat) * cos(lambda);
+  return normalRadius(phi) * cos(phi) * cos(lambda);
 }
 
 float toY(float lat, float lon) {
   float phi = toRadians(lat);
   float lambda = toRadians(lon);
 
-  return normalRadius(lat) * cos(lat) * sin(lambda);
+  return normalRadius(phi) * cos(phi) * sin(lambda);
 }

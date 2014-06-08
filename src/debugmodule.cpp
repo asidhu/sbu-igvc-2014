@@ -6,7 +6,7 @@
 #include <string>
 #include "event_flag.h"
 void debugmodule::initialize(uint32& flag){
-	flag=EFLAG_GPSDATA;
+	flag=EFLAG_IMUDATA | EFLAG_GPSDATA;
 }
 
 void debugmodule::update(bot_info* data){
