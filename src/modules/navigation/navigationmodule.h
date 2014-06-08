@@ -9,6 +9,7 @@ class motorctrl;
 class joystickevent;
 struct gpsdata;
 struct imudata;
+struct waypointdata;
 class navigationmodule:public module{
 	private:
 	static const char* myName;
@@ -17,12 +18,19 @@ class navigationmodule:public module{
 	void processJSEvent(joystickevent*);
 	void processGPSEvent(gpsdata*);
 	void processIMUEvent(imudata*);
+	volatile float currentHeading;
+	volatile float currentLat;
+	volatile float currentLon;
+    volatile bool modified;
 	volatile bool running;
+	waypointdata* currentWaypoint;
+	
 	public:
 	int m_navmode;
 	void initialize(uint32&);
 	void update(bot_info*);
 	void pushEvent(event* );
+	static void* thread(void* args);
 	navigationmodule(motorctrl* mc){
 		m_motors=mc;
 	}
