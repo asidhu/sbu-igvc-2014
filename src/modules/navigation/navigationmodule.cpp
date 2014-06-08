@@ -33,7 +33,7 @@
 		//Get GPS and IMU events for localization and pose estimation
 		listener_flag|= EFLAG_GPSDATA | EFLAG_IMUDATA;
 		currentWaypoint->lat=42.67816288333;
-		currentWaypoint->lon=
+		//currentWaypoint->lon=
 		currentWaypoint->nextWaypoint=NULL;
 		spawnThread(navigationmodule::thread,this);
 	}
@@ -70,11 +70,11 @@
 				}
 			break;
 			case EFLAG_IMUDATA:
-                 processIMUEvent((imudata*)evt->m_data);
+                 	processIMUEvent((imudata*)evt->m_data);
 				
 			break;
 			case EFLAG_GPSDATA:
-				
+			processGPSEvent((gpsdata*)evt->m_data);		
 			break;
 		}	
 	}
@@ -123,8 +123,8 @@
 	
 	}
 
-	void navigationmodule::processIMUEvent(imudata*){
-         float tempHeading=imudate->heading;
+	void navigationmodule::processIMUEvent(imudata* evt){
+         float tempHeading=evt->heading;
          tempHeading+=7.52;
          if ((tempHeading-360)>=0)
          {tempHeading-=360;}
@@ -139,7 +139,7 @@
 		return NULL;
 	}
 	
-	void navigate()
+	void navigationmodule::navigate()
 	{
          while(running)
          {
@@ -181,11 +181,14 @@
                   {difference=360-difference;}
                   m_motors->throttle = ((difference/180)*0.5);
                }  
-    }
+    	   }
+   	}
 	
-	void navigationmodule::processGPSEvent(gpsdata*){
-         currentLat=gpsdata->latitude;
-         currentLon=gpsdata->longitude;
+	void navigationmodule::processGPSEvent(gpsdata* evt){
+         float latitude = evt->gps[0].latitude;
+         float longitude = evt->gps[0].longitude;
+	 currentLat=latitude;
+         currentLon=longitude;
          modified=true;
 	}
 const char* navigationmodule::myName="Navigation Module";

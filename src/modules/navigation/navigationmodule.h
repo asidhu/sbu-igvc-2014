@@ -18,6 +18,7 @@ class navigationmodule:public module{
 	void processJSEvent(joystickevent*);
 	void processGPSEvent(gpsdata*);
 	void processIMUEvent(imudata*);
+	void navigate();
 	volatile float currentHeading;
 	volatile float currentLat;
 	volatile float currentLon;
