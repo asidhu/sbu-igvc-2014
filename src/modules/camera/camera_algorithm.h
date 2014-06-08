@@ -3,6 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <time.h>
+#define CALIBRATE_LINE_DETECTOR 0x06
 //Defines interface for opencv camera algorithms...
 
 struct cam_params{
@@ -46,7 +47,7 @@ struct algorithm_params{
 	cam_params  m_left, m_right;
 	calib_params m_calib;
 	line_detector_params m_line;
-	bool calibration_mode;
+	int calibration_mode;
 };
 
 

@@ -106,7 +106,9 @@
 	void joystickmodule::update(bot_info* data){
 		//return events in the sent queue to pool.
 		m_event_pool.insert(m_event_pool.end(),m_event_sent.begin(),m_event_sent.end());
-		m_event_sent.empty();
+		m_event_sent.clear();
+		
+		
 		//send events waiting in the queue
 		std::vector<joystickevent*>::iterator it = m_event_queue.begin(),
 			last = m_event_queue.end(),start;

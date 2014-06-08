@@ -13,6 +13,17 @@
 #include <opencv2/opencv.hpp>
 #include <linux/videodev2.h>
 #include "logger.h"
+
+
+void modifyinitialthresh(int val,void* dat){
+	algorithm_params* ap = (algorithm_params*)dat;
+	ap->m_line.initial_thresh=val;
+}
+void modifygauss(int val,void* dat){
+	algorithm_params* ap = (algorithm_params*)dat;
+	ap->m_line.gauss_blur = (float)val/10;
+}
+
 	void* cameramodule::thread(void* args){
 		cameramodule* module = (cameramodule*) args;
 		int leftCam = atoi(module->m_cfg.dev_cam_left);
@@ -24,6 +35,18 @@
 		if(!m_right.isOpened()){
 			Logger::log(module->m_moduleid,LOGGER_ERROR,"Unable to open right camera!");
 		}
+		module->m_parameters->calibration_mode = CALIBRATE_LINE_DETECTOR;
+		namedWindow("left");
+		createTrackbar("init thresh","left", &module->m_parameters->m_line.initial_thresh,255,
+			modifyinitialthresh,module->m_parameters);		
+		int gauss = module->m_parameters->m_line.gauss_blur*10;
+		createTrackbar("blur","left", &gauss,200,
+			modifygauss,module->m_parameters);     	
+		createTrackbar("canny thresh","left", &module->m_parameters->calibration_mode.,255,
+			modifyinitialthresh,module->m_parameters);		
+		createTrackbar("init thresh","left", &module->m_parameters->calibration_mode.initial_thresh,255,
+			modifyinitialthresh,module->m_parameters);		
+
 		module->running=true;
 		while(module->running){
 			module->runCamera(&m_left, &m_right);

@@ -4,7 +4,7 @@
 #include "modules/joystick/joystickcfg.h"
 #include <vector>
 #include <iostream>
-
+#include "logger.h"
 class event;
 
 class joystickevent{
@@ -28,8 +28,17 @@ class joystickmodule:public module{
 	std::vector<joystickevent*> m_event_queue;
 	std::vector<joystickevent*> m_event_sent;
 	joystickevent* getEvent(){
-		if(m_event_pool.size()==0)
-			m_event_pool.push_back(new joystickevent());
+		if(m_event_pool.size()==0){
+			joystickevent* evt = new joystickevent();
+			if(evt==NULL){
+				Logger::log(m_moduleid,LOGGER_ERROR,"unable to allocate new joystick event!");	
+				return NULL;
+			}
+			m_event_pool.push_back(evt);
+		}
+		if(m_event_pool.size()>1000 || m_event_queue.size()>1000 || m_event_sent.size()>1000){
+			Logger::log(m_moduleid,LOGGER_ERROR,"allocated too many js events?");
+		}
 		joystickevent* ret = m_event_pool.back();
 		m_event_pool.pop_back();
 		return ret;

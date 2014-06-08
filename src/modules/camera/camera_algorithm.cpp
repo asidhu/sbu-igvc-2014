@@ -4,7 +4,7 @@
 
 
 void camera_algorithm::beginCalib(algorithm_params* params){
-	params->calibration_mode=true;
+//	params->calibration_mode=2;
 	//tmp
 	params->m_calib.pattern_size = cv::Size(5,8);
 	params->m_calib.num_frames=15;
@@ -130,7 +130,7 @@ void camera_algorithm::performCalibration(algorithm_params* params){
 void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& debug_images){
 	using namespace cv;
 	line_detector_params L = param->m_line;
-	if(param->calibration_mode){
+	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		debug_images.push_back(img);
 	}
 	Mat channels[3];
@@ -162,7 +162,7 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 	assert(L.gauss_blur_kernel_size%2!=0);
 	GaussianBlur(blue,blue,Size(L.gauss_blur_kernel_size,L.gauss_blur_kernel_size),
 		L.gauss_blur,L.gauss_blur);
-	if(param->calibration_mode){
+	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		Mat tst;
 		cvtColor(blue,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
@@ -180,7 +180,7 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 		iterations++;
 	} while (!done && iterations < 50);
 	//GaussianBlur(skel,skel,Size(3,3),1.5,1.5);
-	if(param->calibration_mode){
+	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		Mat tst;
 		cvtColor(skel,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
@@ -196,7 +196,7 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 			line(edges, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255),3,CV_AA);
 		}
 	}
-	if(param->calibration_mode){
+	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		Mat tst;
 		cvtColor(edges,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
@@ -228,10 +228,11 @@ void camera_algorithm::lineDetection(algorithm_params* params){
 		R=params->m_right.normal;
 	std::vector<Mat> m_debug_imgs;
 	lineDetector(L,params,m_debug_imgs);
-	Mat m_display;
-	paint_debug_images(m_debug_imgs,2,m_display);
-	imshow("left",m_display);
-		
+	if(params->calibration_mode==CALIBRATE_LINE_DETECTOR){
+		Mat m_display;
+		paint_debug_images(m_debug_imgs,2,m_display);
+		imshow("left",m_display);
+	}
 	lineDetector(R,params,m_debug_imgs);
 }
 
