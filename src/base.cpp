@@ -105,7 +105,14 @@ void bot::dispatchToList(std::vector<module*>& list, event* evt){
 
 void bot::terminate(){
 	terminateSelf=true;
-	sleepms(5000);	
+	sleepms(1000);
+	std::cout<<"Shutdown in 3..."<<std::endl;
+	sleepms(1000);
+	std::cout<<"Shutdown in 2..."<<std::endl;
+	sleepms(1000);
+	std::cout<<"Shutdown in 1..."<<std::endl;
+	sleepms(1000);
+	std::cout<<"Shutdown in 0..."<<std::endl;
 	exit(0);
 }
 
