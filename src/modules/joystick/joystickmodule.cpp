@@ -64,13 +64,16 @@
 					sendBtnEvt(BUTTON_ROTATE_RIGHT,e.value);
 				if(e.number == m_cfg.backwards)
 					sendBtnEvt(BUTTON_BACKWARDS,e.value);
+				if(e.number == m_cfg.auto1)
+					sendBtnEvt(BUTTON_AUTO1, e.value);
+				if(e.number == m_cfg.auto2)
+					sendBtnEvt(BUTTON_AUTO2, e.value);
 			}
 			if(e.type == JS_EVENT_AXIS){
 				if(e.number == m_cfg.lt.id){
 					double power = ((double)e.value/(m_cfg.lt.max-m_cfg.lt.min))+.5;
 						sendAxisEvt(AXIS_THROTTLE,power);
 				}
-				
 			} 
 		}
 		close(fd_dev);
@@ -149,7 +152,7 @@
 	{
 		short value;	// Value is 16 bits signed
 		char number;	// Number is 8 bits unsigned
-		while (calibration<7 && running)
+		while (calibration<8 && running)
 		{	
 			switch(calibration)
 			{
@@ -164,15 +167,16 @@
 					break;
 				case 4: Logger::log(m_moduleid,LOGGER_INFO,"Press the button you would like to use for backwards...");
 					break;
-				case 5: Logger::log(m_moduleid,LOGGER_INFO,"Click left trigger completely and then release it completely...");
-					Logger::log(m_moduleid,LOGGER_INFO,"Then hit the button you chose for safety...");
+				case 5: Logger::log(m_moduleid,LOGGER_INFO,"Press the button you would like to use for autonomous btn 1...");
 					break;
-				case 6: Logger::log(m_moduleid,LOGGER_INFO,"Click right trigger completely and then release it completely...");
+				case 6: Logger::log(m_moduleid,LOGGER_INFO,"Press the button you would like to use for autonomous btn 2...");
+					break;
+				case 7: Logger::log(m_moduleid,LOGGER_INFO,"Click left trigger completely and then release it completely...");
 					Logger::log(m_moduleid,LOGGER_INFO,"Then hit the button you chose for safety...");
 					break;
 				default: Logger::log(m_moduleid,LOGGER_ERROR,"calibration error");
 			}
-			if(calibration<5){
+			if(calibration<7){
 				struct js_event e;
 				do{
 					if(read(fd_dev,&e,sizeof(e))==0)continue;
@@ -198,7 +202,18 @@
 								m_cfg.backwards=number;
 						else continue;
 						break;
-
+					case 5:  if(number!=m_cfg.safety && number!=m_cfg.forward
+							&& number!=m_cfg.rotate_left && number!= m_cfg.rotate_right
+							&& number!=m_cfg.backwards)
+								m_cfg.auto1=number;
+						else continue;
+						break;
+					case 6:  if(number!=m_cfg.safety && number!=m_cfg.forward
+							&& number!=m_cfg.rotate_left && number!= m_cfg.rotate_right
+							&& number!=m_cfg.backwards && number!=m_cfg.auto1)
+								m_cfg.auto2=number;
+						else continue;
+						break;
 				}
 			}
 			else{
@@ -246,13 +261,13 @@
 					}
 					
 				}while(running);
-				if(calibration==5)
+				if(calibration==7)
 				{
 					m_cfg.lt.id=axis;
 					m_cfg.lt.min=min;
 					m_cfg.lt.max=max;
 				}
-				else if(calibration==6)
+				else if(calibration==8)
 				{
 					m_cfg.rt.id=axis;
 					m_cfg.rt.min=min;
@@ -283,7 +298,9 @@ void joystickmodule::loadConfig(){
 	xml_node<> *safety = backward->next_sibling();
 	xml_node<> *rlctrl = safety->next_sibling();
 	xml_node<> *rrctrl =rlctrl->next_sibling();
-	xml_node<> *throttle =rrctrl->next_sibling();
+	xml_node<> *auto1 = rrctrl->next_sibling();
+	xml_node<> *auto2 =auto1->next_sibling();
+	xml_node<> *throttle =auto2->next_sibling();
 	xml_node<> *throttlemin =throttle->next_sibling();
 	xml_node<> *throttlemax =throttlemin->next_sibling();
 	m_cfg.forward = (char)atoi(forward->value());	
@@ -291,11 +308,13 @@ void joystickmodule::loadConfig(){
 	m_cfg.rotate_left = (char)atoi(rlctrl->value());	
 	m_cfg.rotate_right = (char)atoi(rrctrl->value());	
 	m_cfg.safety = (char)atoi(safety->value());	
+	m_cfg.auto1 = (char)atoi(auto1->value());	
+	m_cfg.auto2 = (char)atoi(auto2->value());	
 	m_cfg.lt.id = (char)atoi(throttle->value());	
 	m_cfg.lt.min = atoi(throttlemin->value());	
 	m_cfg.lt.max = atoi(throttlemax->value());	
 	Logger::log(m_moduleid,LOGGER_INFO,"Joystick configuration loaded.");
-	calibration=8;
+	calibration=10;
 }
 
 void joystickmodule::saveConfig(){
@@ -307,6 +326,8 @@ void joystickmodule::saveConfig(){
 		*rrctrl= "rotateright",
 		*rlctrl= "rotateleft",
 		*safety = "safety",
+		*auto1 = "auto1",
+		*auto2 = "auto2",
 		*throttle = "throttle",
 		*throttlemin = "throttlemin",
 		*throttlemax = "throttlemax";
@@ -323,6 +344,10 @@ void joystickmodule::saveConfig(){
 	body->append_node( doc.allocate_node(node_element,rlctrl,doc.allocate_string(buff)));
 	sprintf(buff,"%d",m_cfg.rotate_right);
 	body->append_node( doc.allocate_node(node_element,rrctrl,doc.allocate_string(buff)));
+	sprintf(buff,"%d",m_cfg.auto1);
+	body->append_node( doc.allocate_node(node_element,auto1,doc.allocate_string(buff)));
+	sprintf(buff,"%d",m_cfg.auto2);
+	body->append_node( doc.allocate_node(node_element,auto2,doc.allocate_string(buff)));
 	sprintf(buff,"%d",m_cfg.lt.id);
 	body->append_node( doc.allocate_node(node_element,throttle,doc.allocate_string(buff)));
 	sprintf(buff,"%d",m_cfg.lt.min);

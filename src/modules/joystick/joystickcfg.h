@@ -5,6 +5,8 @@
 #define BUTTON_ROTATE_LEFT		0x3
 #define BUTTON_ROTATE_RIGHT		0x4
 #define BUTTON_BACKWARDS		0x5
+#define BUTTON_AUTO1			0x7
+#define BUTTON_AUTO2			0x8
 #define AXIS_THROTTLE			0x6
 //cfg should store mapping
 struct joystick_cfg{
@@ -17,8 +19,7 @@ struct joystick_cfg{
 		char id;
 		short min, max;
 	} rt;
-	char safety,forward,rotate_left,rotate_right,backwards;
-
+	char safety,forward,rotate_left,rotate_right,backwards, auto1,auto2;
 
 
 };
