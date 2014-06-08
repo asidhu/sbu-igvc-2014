@@ -14,12 +14,12 @@
 #include <cstring>
 	void* arduinomodule::thread(void* args){
 		arduinomodule* module = (arduinomodule*) args;
+		module->m_device = openSerialPort(module->path,115200,0,0);
 		
-		while(true){
 			//block until data is read from arduino
 			module->readArduino();
 			//module->m_dataArrived=true;
-		}
+		close(module->m_device);	
 		return NULL;			
 	}
 
@@ -28,7 +28,18 @@
 		char buffer[buffsize];
 		int size=0, incoming;
 		char nlChar = '\n';
-		while(true){
+		while(running){
+			while(m_cmds.size()>0){
+				arduinocmd* my_cmd = m_cmds.back();
+				m_cmds.pop_back();
+				char outBuffer[1024];
+				if(my_cmd->arduino_flag==FLAG_RESET_MOTORS){
+					const char *msg = "M\n";
+					write(m_device,msg,2);
+				}
+				
+				delete my_cmd;
+			}
 			incoming = read(m_device,buffer+size,buffsize-size);
 			if(incoming==-1){
 				sleepms(10);
@@ -59,7 +70,6 @@
 	}
 
 	void arduinomodule::initializeReader(){
-		m_device = openSerialPort(path,115200,0,0);
 		spawnThread(arduinomodule::thread, this);
 		m_dataArrived=false;
 	}
@@ -78,7 +88,8 @@
 		4) listeners should also be setup HERE. If you want to listen to some event, take listener_flag and | it with the event flag.
 	**/
 	void arduinomodule::initialize(uint32& listener_flag){
-	        readPathConfig(cfgfile, m_moduleid, path);
+	        listener_flag |= EFLAG_ARDUINOCMD;
+		readPathConfig(cfgfile, m_moduleid, path);
 		initializeReader();
 	}
 
@@ -114,7 +125,12 @@
 		
 	**/	
 	void arduinomodule::pushEvent(event* evt){
-		
+		if(evt->m_eventflag == EFLAG_TERMINATE)
+			running=false;	
+		if(evt->m_eventflag == EFLAG_ARDUINOCMD){
+			arduinocmd* cmd = (arduinocmd*)evt->m_data;
+			m_cmds.push_back(cmd);	
+		}	
 	}
 
 const char* arduinomodule::myName="Arduino Module";

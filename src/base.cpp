@@ -6,31 +6,48 @@
 #include "modules/network/networkmodule.h"
 #include "modules/imu/imumodule.h"
 #include "modules/joystick/joystickmodule.h"
-
-	#include "modules/camera/cameramodule.h"
+#include "modules/navigation/navigationmodule.h"
+#include "modules/motors/motormodule.h"
+//	#include "modules/camera/cameramodule.h"
 #include "modules/arduino/arduinomodule.h"
 #include "osutils.h"
 #include "event_flag.h"
 #include "debugmodule.h"
 #include "stdio.h"
 #include <iostream>
+#include <unistd.h>
+#include <signal.h>
+#include <stdlib.h>
+bot my_bot;
+void terminate(int sig){
+	my_bot.terminate();
+}
+
 int main(int argc, char** argv){
-	bot b;
-	b.initialize();
-	b.mainLoop();
+	struct sigaction action;
+	memset(&action, 0, sizeof(struct sigaction));
+	action.sa_handler=terminate;
+	sigaction(SIGTERM,&action,NULL);
+	sigaction(SIGINT, &action,NULL);
+	sigaction(SIGSTOP, &action, NULL);
+	my_bot.initialize();
+	my_bot.mainLoop();
 }
 
 void bot::initialize(){
 	//load all modules.
 	//m_modules.push_back(new samplemodule());
-	//m_modules.push_back(new cpuinfomodule());
+	m_modules.push_back(new cpuinfomodule());
 	//m_modules.push_back(new networkmodule());
 	m_modules.push_back(new joystickmodule());
 	m_modules.push_back(new imumodule());
 	m_modules.push_back(new arduinomodule("cfg/arduino1.cfg"));
-	m_modules.push_back(new cameramodule());
-	m_modules.push_back(new debugmodule(&std::cout));	
-
+//	m_modules.push_back(new cameramodule());
+	m_modules.push_back(new debugmodule(&std::cout));
+	motormodule* mm = new motormodule();
+	navigationmodule* nm = new navigationmodule(&(mm->m_ctrl));
+	m_modules.push_back(mm);
+	m_modules.push_back(nm);
 	Logger::initialize("cfg/logger.cfg",&m_modules);
 	
 	uint32 count=0;
@@ -84,6 +101,12 @@ void bot::dispatchToList(std::vector<module*>& list, event* evt){
 	}
 }
 
+void bot::terminate(){
+	terminateSelf=true;
+	sleepms(5000);	
+	exit(0);
+}
+
 void bot::mainLoop(){
 	uint32 benchmark[m_modules.size()];
 	bot_info moduleInfo;
@@ -92,6 +115,14 @@ void bot::mainLoop(){
 	moduleInfo.m_moduleTimerLen = m_modules.size();
 	while(1){
 		moduleInfo.m_eventQueue.clear();
+		if(terminateSignalSent)
+			break;
+		if(terminateSelf){
+			event* evt = new event(0);
+			evt->m_eventflag = EFLAG_TERMINATE;
+			moduleInfo.m_eventQueue.push_back(evt);
+			terminateSignalSent=true;		
+		}
 		uint32 counter=0;
 		for(std::vector<module*>::iterator it = m_modules.begin(); it!=m_modules.end();it++){
 			module* m = *it;

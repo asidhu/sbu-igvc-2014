@@ -46,6 +46,7 @@ struct algorithm_params{
 	cam_params  m_left, m_right;
 	calib_params m_calib;
 	line_detector_params m_line;
+	bool calibration_mode;
 };
 
 

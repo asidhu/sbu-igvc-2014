@@ -24,9 +24,12 @@
 		if(!m_right.isOpened()){
 			Logger::log(module->m_moduleid,LOGGER_ERROR,"Unable to open right camera!");
 		}
-		while(true){
+		module->running=true;
+		while(module->running){
 			module->runCamera(&m_left, &m_right);
 		}
+		m_left.release();
+		m_right.release();	
 		return NULL;			
 	}
 
@@ -36,13 +39,6 @@
 		using namespace cv;
 		VideoCapture left=*L,
 			right = *R;
-		Mat grass = imread("grass.jpg",CV_LOAD_IMAGE_COLOR);
-		
-		m_parameters->m_left.normal=grass;
-		m_parameters->m_right.normal=grass;
-		m_algorithms->lineDetection(m_parameters);
-		
-			waitKey(30);
 
 		if(!left.isOpened() || !right.isOpened())
 			return;
@@ -67,7 +63,7 @@
 		cvtColor(rightPic,m_parameters->m_right.gray ,CV_BGR2GRAY);
 		split(leftPic,m_parameters->m_left.channels);
 		split(rightPic,m_parameters->m_right.channels);
-
+		m_algorithms->lineDetection(m_parameters);
 		//m_algorithms->calib(calibration_parameters,leftPic,rightPic);
 		
 			
@@ -120,7 +116,8 @@
 		
 	**/	
 	void cameramodule::pushEvent(event* evt){
-		
+		if(evt->m_eventflag==EFLAG_TERMINATE)
+			running=false;		
 	}
 
 const char* cameramodule::myName="Camera Module";

@@ -62,7 +62,7 @@ int spawnThread( void*(*threaded)(void*), void * arg){
 		return 1;
 }
 
-int set_interface_attribs (int fd, int speed, int parity)
+int set_interface_attribs (int fd, int speed, int parity, int c_flag)
 {
         struct termios tty;
         memset (&tty, 0, sizeof tty);
@@ -93,6 +93,8 @@ int set_interface_attribs (int fd, int speed, int parity)
         tty.c_cflag |= parity;
         tty.c_cflag &= ~CSTOPB;
         tty.c_cflag &= ~CRTSCTS;
+        tty.c_cflag &= ~CS8;
+	tty.c_cflag |=c_flag;
 
         if (tcsetattr (fd, TCSANOW, &tty) != 0)
         {
@@ -120,7 +122,7 @@ void set_blocking (int fd, int should_block)
 }
 
 
-int openSerialPort( const char* serialport, int speed, int parity, int blocking){
+int openSerialPort( const char* serialport, int speed, int parity, int blocking,	int c_flag){
 	speed_t actualSpeed;
 	if(speed==9600)
 		actualSpeed= B9600;
@@ -141,7 +143,7 @@ int openSerialPort( const char* serialport, int speed, int parity, int blocking)
 	        return -1;
 	}
 
-	set_interface_attribs (fd, actualSpeed, parity);  // set speed to 115,200 bps, 8n1 (no parity)
+	set_interface_attribs (fd, actualSpeed, parity,c_flag);  // set speed to 115,200 bps, 8n1 (no parity)
 	set_blocking (fd, blocking);                // set no blocking
 	return fd;
 }

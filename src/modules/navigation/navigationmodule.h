@@ -9,32 +9,23 @@ class motorctrl;
 class joystickevent;
 struct gpsdata;
 struct imudata;
-
-struct position {
-  double x, y;
-};
-
 class navigationmodule:public module{
 	private:
-  struct gpsdata* m_gpsdata;
-  struct imudata* m_imudata;
-  double priorErrorCovar;                // for Kalman
-  bool modifiedGPS;
-  bool modifiedIMU;
 	static const char* myName;
 	motorctrl* m_motors;
+	volatile bool initializeMotors;
 	void processJSEvent(joystickevent*);
 	void processGPSEvent(gpsdata*);
 	void processIMUEvent(imudata*);
-	static void* thread(void*);
-	void navigate();
-	void updatePos();
-	void kalmanIteration(double 
+	volatile bool running;
 	public:
 	int m_navmode;
 	void initialize(uint32&);
 	void update(bot_info*);
 	void pushEvent(event* );
+	navigationmodule(motorctrl* mc){
+		m_motors=mc;
+	}
 	const char* getCommonName(){
 		return myName;
 	}

@@ -8,12 +8,13 @@
 #include <linux/joystick.h>
 #include "logger.h"
 #include <string.h>
+#include <unistd.h>
 	void* joystickmodule::thread(void* args){
 		joystickmodule* module = (joystickmodule*)args;
-		module->polling=true;
+		module->running=true;
 		module->calibration =0;
 		strcpy(module->m_cfg.dev_name,"/dev/input/js0");
-		module->pollEvents();	
+		module->pollEvents();
 		return NULL;
 	}
 
@@ -40,7 +41,7 @@
 		ioctl(fd_dev, JSIOCGNAME(80),&controller_name);
 		Logger::log(m_moduleid,LOGGER_INFO,"Found controller %s",controller_name);
 		//get information about controller.
-		while(polling){
+		while(running){
 			if (calibration==0)
 			{
 				calibrateJoyStick(fd_dev);
@@ -68,6 +69,7 @@
 				
 			} 
 		}
+		close(fd_dev);
 			
 	
 	}
@@ -130,7 +132,8 @@
 		
 	**/
 	void joystickmodule::pushEvent(event* evt){
-		
+		if(evt->m_eventflag==EFLAG_TERMINATE)
+			running=false;	
 	}
 
 	/**
@@ -140,7 +143,7 @@
 	{
 		short value;	// Value is 16 bits signed
 		char number;	// Number is 8 bits unsigned
-		while (calibration<7)
+		while (calibration<7 && running)
 		{	
 			switch(calibration)
 			{
@@ -166,10 +169,10 @@
 			if(calibration<5){
 				struct js_event e;
 				do{
-					read(fd_dev,&e,sizeof(e));
+					if(read(fd_dev,&e,sizeof(e))==0)continue;
 					number=e.number;
 					value=e.value;
-				}while(value!=1 && e.type!=JS_EVENT_BUTTON);
+				}while(value!=1 && e.type!=JS_EVENT_BUTTON && running);
 				switch(calibration){
 					case 0: m_cfg.safety=number;break;
 					case 1: if(number!=m_cfg.safety)m_cfg.forward=number;
@@ -198,7 +201,7 @@
 				short min,max;
 				bool axis_picked=false;
 				do{
-					read(fd_dev, &e,sizeof(e));
+					if(read(fd_dev, &e,sizeof(e))==0)continue;
 					number=e.number;
 					value=e.value;
 					if(e.type & JS_EVENT_INIT)continue;
@@ -236,7 +239,7 @@
 						
 					}
 					
-				}while(true);
+				}while(running);
 				if(calibration==5)
 				{
 					m_cfg.lt.id=axis;

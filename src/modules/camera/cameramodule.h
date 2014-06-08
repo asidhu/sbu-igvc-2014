@@ -19,7 +19,9 @@ private:
 	cameraconfig m_cfg;
 	camera_algorithm* m_algorithms;
 	algorithm_params *m_parameters;
+	volatile bool running;
 public:
+	
 	void initialize(uint32&);
 	void update(bot_info*);
 	void pushEvent(event* );

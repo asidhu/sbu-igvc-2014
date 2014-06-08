@@ -4,7 +4,7 @@
 
 
 void camera_algorithm::beginCalib(algorithm_params* params){
-	
+	params->calibration_mode=true;
 	//tmp
 	params->m_calib.pattern_size = cv::Size(5,8);
 	params->m_calib.num_frames=15;
@@ -127,15 +127,34 @@ void camera_algorithm::performCalibration(algorithm_params* params){
 }
 
 
-void lineDetector(cv::Mat& img, algorithm_params* param){
+void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& debug_images){
 	using namespace cv;
 	line_detector_params L = param->m_line;
+	if(param->calibration_mode){
+		debug_images.push_back(img);
+	}
 	Mat channels[3];
 	split(img,channels);
-	Mat blue = channels[0];
+	Mat blue = channels[0],green=channels[1],red=channels[2];
 	Mat edges = blue.clone();
-	imshow("blue",blue);
+
+/*
+	Mat HSV;
+	cvtColor( img,HSV,CV_BGR2HSV);
+	split(HSV,channels);
+	blue = channels[2];
+	threshold(blue,blue,L.initial_thresh,255,THRESH_BINARY);
+	blue = blue > 200;
+	bitwise_and(HSV,Scalar(0,0,0),HSV,blue);
+	blue=HSV;
+	imshow("white",blue);
+*/	
 	threshold(blue,blue,L.initial_thresh,255,0);
+	threshold(green,green,L.initial_thresh,255,0);
+	threshold(red,red,L.initial_thresh,255,0);
+	
+	bitwise_and(green,red,green);
+	bitwise_and(blue,green,blue);	
 	Mat skel(blue.size(), CV_8UC1, Scalar(0));
 	Mat temp;
 	Mat eroded; 
@@ -143,7 +162,12 @@ void lineDetector(cv::Mat& img, algorithm_params* param){
 	assert(L.gauss_blur_kernel_size%2!=0);
 	GaussianBlur(blue,blue,Size(L.gauss_blur_kernel_size,L.gauss_blur_kernel_size),
 		L.gauss_blur,L.gauss_blur);
-	imshow("blur",blue);
+	if(param->calibration_mode){
+		Mat tst;
+		cvtColor(blue,tst,CV_GRAY2BGR);
+		debug_images.push_back(tst);
+	}
+	int iterations=0;
 	bool done;              
 	do
 	{
@@ -153,27 +177,62 @@ void lineDetector(cv::Mat& img, algorithm_params* param){
 		bitwise_or(skel, temp, skel);
 		eroded.copyTo(blue);
 		done = (countNonZero(blue) == 0);
-	} while (!done);
+		iterations++;
+	} while (!done && iterations < 50);
 	//GaussianBlur(skel,skel,Size(3,3),1.5,1.5);
-	imshow("skeleton",skel);
+	if(param->calibration_mode){
+		Mat tst;
+		cvtColor(skel,tst,CV_GRAY2BGR);
+		debug_images.push_back(tst);
+	}
 	Canny(skel,edges,L.canny_thresh1,L.canny_thresh2,3);
 	//GaussianBlur(edges,edges,Size(7,7),1.5,1.5);
 	std::vector<Vec4i> lines;
 	HoughLinesP(edges,lines,L.hough_rho,L.hough_theta,L.hough_thresh,
 		L.hough_min_line,L.hough_max_gap);
-	for(size_t i=0;i<lines.size();i++){
-		Vec4i v = lines[i];
-		line(edges, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255),3,CV_AA);
+	if(lines.size()<20){
+		for(size_t i=0;i<lines.size();i++){
+			Vec4i v = lines[i];
+			line(edges, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255),3,CV_AA);
+		}
 	}
-	imshow("edges",edges);
+	if(param->calibration_mode){
+		Mat tst;
+		cvtColor(edges,tst,CV_GRAY2BGR);
+		debug_images.push_back(tst);
+	}
+}
+
+void paint_debug_images(std::vector<cv::Mat>& imgs, int ncols,cv::Mat& output){
+	using namespace cv;
+	if(imgs.size()==0)
+		return;
+	int nrows = imgs.size()/ncols;
+	if(imgs.size()%ncols)
+		nrows++;
+	Size sz = imgs[0].size();
+	output = Mat(sz.height*nrows,sz.width*ncols,CV_8UC3);
+	Size osz= output.size();
+	for(int i=0;i<imgs.size();i++){
+		int x = i%ncols,
+			y=i/ncols;
+		Mat ROI_output = output(Rect(x*sz.width,y*sz.height,sz.width,sz.height));
+		imgs[i].copyTo(ROI_output);
+	}
+	
 }
 
 void camera_algorithm::lineDetection(algorithm_params* params){
 	using namespace cv;
 	Mat L = params->m_left.normal,
 		R=params->m_right.normal;
-	lineDetector(L,params);
-	lineDetector(R,params);
+	std::vector<Mat> m_debug_imgs;
+	lineDetector(L,params,m_debug_imgs);
+	Mat m_display;
+	paint_debug_images(m_debug_imgs,2,m_display);
+	imshow("left",m_display);
+		
+	lineDetector(R,params,m_debug_imgs);
 }
 
 

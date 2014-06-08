@@ -5,9 +5,11 @@
 // powers range from [1,-1]
 class motorctrl{
 	public:
+	bool offline;
 	double left_power, right_power;
 	bool safety;	
 	double throttle;
+	float voltage;
 };
 
 #endif

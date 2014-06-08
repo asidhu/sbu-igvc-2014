@@ -20,8 +20,9 @@ private:
 	void initializeReader();
 	void readArduino();
 	int m_device;
+	volatile bool running;
 	std::vector<arduinodata*> m_events, m_sent_events, m_recycler;
-
+	std::vector<arduinocmd*> m_cmds;
 	arduinodata* getArduinoData(){
 		if(m_recycler.empty())
 			return new arduinodata();
@@ -40,6 +41,7 @@ public:
 	}
 	
 	arduinomodule(const char *cfgfile){
+		running=true;
 	        strcpy(this->cfgfile, cfgfile);
 		m_dataArrived=false;
 	}
