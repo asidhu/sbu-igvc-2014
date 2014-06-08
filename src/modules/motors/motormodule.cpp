@@ -50,7 +50,11 @@
 			else{
 				m_ctrl.offline=false;
 				buff[n]=0;
-				Logger::log(m_moduleid,LOGGER_INFO,"Motor reply:%s",buff);	
+				int internal, battery;
+				sscanf(buff,"?E\r%x\r%x",&internal, &battery);
+				float iV = internal*28.5f/256;
+				float bV = battery*55.f/256;
+				Logger::log(m_moduleid,LOGGER_INFO,"Motor voltage:Int %f Bat:%f",iV,bV);	
 			}
 		}
 		close(dev_fd);
