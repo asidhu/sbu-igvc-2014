@@ -231,12 +231,12 @@ float toX(float lat, float lon) {
   float phi = toRadians(lat);
   float lambda = toRadians(lon);
 
-  return normalRadius(lat) * cos(lat) * cos(lambda);
+  return normalRadius(phi) * cos(phi) * cos(lambda);
 }
 
 float toY(float lat, float lon) {
   float phi = toRadians(lat);
   float lambda = toRadians(lon);
 
-  return normalRadius(lat) * cos(lat) * sin(lambda);
+  return normalRadius(phi) * cos(phi) * sin(lambda);
 }
