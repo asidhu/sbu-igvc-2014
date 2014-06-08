@@ -9,6 +9,7 @@
 #include "modules/navigation/navigationmodule.h"
 #include "modules/motors/motormodule.h"
 //	#include "modules/camera/cameramodule.h"
+#include "modules/gps/gpsmodule.h"
 #include "modules/arduino/arduinomodule.h"
 #include "osutils.h"
 #include "event_flag.h"
@@ -41,6 +42,7 @@ void bot::initialize(){
 	//m_modules.push_back(new networkmodule());
 	m_modules.push_back(new joystickmodule());
 	m_modules.push_back(new imumodule());
+	m_modules.push_back(new gpsmodule());
 	m_modules.push_back(new arduinomodule("cfg/arduino1.cfg"));
 //	m_modules.push_back(new cameramodule());
 	m_modules.push_back(new debugmodule(&std::cout));

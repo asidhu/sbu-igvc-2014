@@ -9,7 +9,6 @@
 #include "logger.h"
 #include <string.h>
 #include <unistd.h>
-#include <rapidxml/rapidxml.hpp>
 #include <rapidxml/rapidxml_print.hpp>
 #include <cstdlib>
 #include <cstdio>
