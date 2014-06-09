@@ -131,14 +131,11 @@ bool sortLines(cv::Vec4i first, cv::Vec4i second){
 }
 
 
-void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& debug_images){
+cv::Mat lineDetector(cv::Mat& img,  std::vector<cv::Mat>& debug_images){
 	using namespace cv;
-	line_detector_params L = param->m_line;
 	Mat tst = img.clone();
 	Mat channels[3];
-	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		debug_images.push_back(img);
-	}
 
 	medianBlur(tst,tst, 5);
 	split(tst,channels);
@@ -169,20 +166,14 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 	Mat temp;
 	Mat eroded; 
 	Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
-	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
-		Mat tst;
 		cvtColor(blue,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
-	}
 
 	dilate(blue,blue,element,Point(-1,-1),6);
 	blur(blue,blue,Size(12,12));
 //	GaussianBlur(blue,blue,Size(11,11),150,150);
-	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
-		Mat tst;
 		cvtColor(blue,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
-	}
 	
 	
 	int iterations=0;
@@ -199,23 +190,17 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 	} while (!done && iterations < 50);
 	
 	//GaussianBlur(skel,skel,Size(3,3),1.5,1.5);
-	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
-		Mat tst;
 		cvtColor(skel,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
-	}
 	dilate(skel,skel,element);
 	Canny(skel,edges,20,150,3);
-	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
-		Mat tst;
 		cvtColor(edges,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
-	}
 	//GaussianBlur(edges,edges,Size(7,7),1.5,1.5);
 	std::vector<Vec4i> lines;
-	HoughLinesP(skel,lines,1,CV_PI/180,35,20,5);
+	HoughLinesP(skel,lines,1,CV_PI/180,35,30,5);
 	Logger::log(0,LOGGER_INFO,"CAMERA: LINES DETECTED %d",lines.size());
-	Mat hough = img.clone();
+	Mat hough(img.size(),img.type(),Scalar(0,0,0));
 	/*
 		manual algorithm that links lines
 	*/
@@ -236,12 +221,11 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 	if(lines.size()<100){
 		for(size_t i=0;i<lines.size();i++){
 			Vec4i v = lines[i];
-			line(hough, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255),3,CV_AA);
+			line(hough, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255,255,255),1,CV_AA);
 		}
 	}
-	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		debug_images.push_back(hough);
-	}
+	return hough;
 }
 
 void paint_debug_images(std::vector<cv::Mat>& imgs, int ncols,cv::Mat& output){
@@ -263,18 +247,13 @@ void paint_debug_images(std::vector<cv::Mat>& imgs, int ncols,cv::Mat& output){
 	
 }
 
-void camera_algorithm::lineDetection(algorithm_params* params){
+void camera_algorithm::lineDetection(cv::Mat img, cv::Mat& lines){
 	using namespace cv;
-	Mat L = params->m_left.normal,
-		R=params->m_right.normal;
 	std::vector<Mat> m_debug_imgs;
-	lineDetector(L,params,m_debug_imgs);
-	if(params->calibration_mode==CALIBRATE_LINE_DETECTOR){
-		Mat m_display;
-		paint_debug_images(m_debug_imgs,3,m_display);
-		imshow("left",m_display);
-	}
-	lineDetector(R,params,m_debug_imgs);
+	lines =lineDetector(img,m_debug_imgs);
+		//Mat m_display;
+		//paint_debug_images(m_debug_imgs,3,m_display);
+		//imshow("left",m_display);
 }
 
 
@@ -298,9 +277,8 @@ cv::Mat thresh_test(cv::Mat& img, int b, int g, int r, int range){
 }
 
 
-cv::Mat camera_algorithm::objectDetection(algorithm_params* params){
+void camera_algorithm::objectDetection(cv::Mat img, cv::Mat& blobs, cv::Mat& rect){
 	using namespace cv;
-	Mat img = params->m_left.normal.clone();
 	//find orange
 	Mat orange,white;
 	Mat tst;
@@ -321,20 +299,20 @@ cv::Mat camera_algorithm::objectDetection(algorithm_params* params){
 	dilate(objs,objs,element,Point(-1,1),5);
 	cvtColor(objs,tst,CV_GRAY2BGR);
 	m_debugs.push_back(tst.clone());
-	Mat blobs = objs.clone();
+	blobs = objs.clone();
 	std::vector<std::vector<Point> > contours;
   	std::vector<Vec4i> hierarchy;
 	findContours( objs, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 	std::vector<Rect> rects(contours.size());
 	std::vector<std::vector<Point> > contours_poly(contours.size());
+	rect=Mat(blobs.size(),blobs.type());
 	for(int i=0;i<contours.size();i++){
 		approxPolyDP(Mat(contours[i]),contours_poly[i],3,true);
 		rects[i] = boundingRect(Mat(contours_poly[i]));
-		//rectangle(blobs,rects[i].tl(),rects[i].br(),Scalar(255),2,8,0);
+		rectangle(rect,rects[i].tl(),rects[i].br(),Scalar(255),2,8,0);
 	}
-	cvtColor(blobs,tst,CV_GRAY2BGR);
+	cvtColor(rect,tst,CV_GRAY2BGR);
 	m_debugs.push_back(tst.clone());
-	return tst;
 	//Mat m_display;
 	//paint_debug_images(m_debugs,3,m_display);
 	//imshow("left_objD",m_display);

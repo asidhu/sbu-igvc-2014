@@ -61,7 +61,7 @@ public:
 	
 	void performCalibration(algorithm_params*);
 		
-	virtual cv::Mat objectDetection(algorithm_params*);
-	virtual void lineDetection(algorithm_params*);
+	virtual void objectDetection(cv::Mat img,cv::Mat& blob, cv::Mat& rect);
+	virtual void lineDetection(cv::Mat img, cv::Mat& lines);
 };
 #endif
