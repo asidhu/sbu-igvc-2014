@@ -1,7 +1,7 @@
 #include "modules/camera/camera_algorithm.h"
 #include <time.h>
 #include <string>
-
+#include "logger.h"
 
 void camera_algorithm::beginCalib(algorithm_params* params){
 //	params->calibration_mode=2;
@@ -133,8 +133,10 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		debug_images.push_back(img);
 	}
+	Mat tst = img.clone();
 	Mat channels[3];
-	split(img,channels);
+	medianBlur(tst,tst, 3);
+	split(tst,channels);
 	Mat blue = channels[0],green=channels[1],red=channels[2];
 	Mat edges = blue.clone();
 
@@ -149,24 +151,35 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 	blue=HSV;
 	imshow("white",blue);
 */	
-	threshold(blue,blue,L.initial_thresh,255,0);
-	threshold(green,green,L.initial_thresh,255,0);
-	threshold(red,red,L.initial_thresh,255,0);
-	
+	threshold(blue,blue,180,255,0);
+	threshold(green,green,180,255,0);
+	threshold(red,red,180,255,0);
+
+		
 	bitwise_and(green,red,green);
 	bitwise_and(blue,green,blue);	
+
+	
 	Mat skel(blue.size(), CV_8UC1, Scalar(0));
 	Mat temp;
 	Mat eroded; 
 	Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
-	assert(L.gauss_blur_kernel_size%2!=0);
-	GaussianBlur(blue,blue,Size(L.gauss_blur_kernel_size,L.gauss_blur_kernel_size),
-		L.gauss_blur,L.gauss_blur);
 	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		Mat tst;
 		cvtColor(blue,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
 	}
+
+	dilate(blue,blue,element,Point(-1,-1),6);
+	blur(blue,blue,Size(9,9));
+//	GaussianBlur(blue,blue,Size(11,11),150,150);
+	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
+		Mat tst;
+		cvtColor(blue,tst,CV_GRAY2BGR);
+		debug_images.push_back(tst);
+	}
+	
+	
 	int iterations=0;
 	bool done;              
 	do
@@ -179,27 +192,33 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 		done = (countNonZero(blue) == 0);
 		iterations++;
 	} while (!done && iterations < 50);
+	
 	//GaussianBlur(skel,skel,Size(3,3),1.5,1.5);
 	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		Mat tst;
 		cvtColor(skel,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
 	}
-	Canny(skel,edges,L.canny_thresh1,L.canny_thresh2,3);
-	//GaussianBlur(edges,edges,Size(7,7),1.5,1.5);
-	std::vector<Vec4i> lines;
-	HoughLinesP(edges,lines,L.hough_rho,L.hough_theta,L.hough_thresh,
-		L.hough_min_line,L.hough_max_gap);
-	if(lines.size()<20){
-		for(size_t i=0;i<lines.size();i++){
-			Vec4i v = lines[i];
-			line(edges, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255),3,CV_AA);
-		}
-	}
+	dilate(skel,skel,element);
+	Canny(skel,edges,20,150,3);
 	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		Mat tst;
 		cvtColor(edges,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
+	}
+	//GaussianBlur(edges,edges,Size(7,7),1.5,1.5);
+	std::vector<Vec4i> lines;
+	HoughLinesP(skel,lines,1,CV_PI/180,30,40,5);
+	Logger::log(0,LOGGER_INFO,"CAMERA: LINES DETECTED %d",lines.size());
+	Mat hough = img.clone();
+	if(lines.size()<50){
+		for(size_t i=0;i<lines.size();i++){
+			Vec4i v = lines[i];
+			line(hough, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255),3,CV_AA);
+		}
+	}
+	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
+		debug_images.push_back(hough);
 	}
 }
 
@@ -230,7 +249,7 @@ void camera_algorithm::lineDetection(algorithm_params* params){
 	lineDetector(L,params,m_debug_imgs);
 	if(params->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		Mat m_display;
-		paint_debug_images(m_debug_imgs,2,m_display);
+		paint_debug_images(m_debug_imgs,3,m_display);
 		imshow("left",m_display);
 	}
 	lineDetector(R,params,m_debug_imgs);

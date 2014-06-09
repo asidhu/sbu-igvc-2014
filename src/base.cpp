@@ -7,7 +7,7 @@
 #include "modules/imu/imumodule.h"
 #include "modules/joystick/joystickmodule.h"
 #include "modules/motors/motormodule.h"
-//	#include "modules/camera/cameramodule.h"
+	#include "modules/camera/cameramodule.h"
 #include "modules/gps/gpsmodule.h"
 #include "modules/arduino/arduinomodule.h"
 #include "osutils.h"
@@ -44,7 +44,7 @@ void bot::initialize(){
 	m_modules.push_back(new gpsmodule());
 	m_modules.push_back(new arduinomodule("cfg/arduino1.cfg"));
 	m_modules.push_back(new arduinomodule("cfg/arduino2.cfg"));
-//	m_modules.push_back(new cameramodule());
+	m_modules.push_back(new cameramodule());
 	m_modules.push_back(new debugmodule(&std::cout));
 	motormodule* mm = new motormodule();
 	m_modules.push_back(mm);

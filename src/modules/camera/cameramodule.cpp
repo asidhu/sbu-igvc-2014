@@ -15,15 +15,6 @@
 #include "logger.h"
 
 
-void modifyinitialthresh(int val,void* dat){
-	algorithm_params* ap = (algorithm_params*)dat;
-	ap->m_line.initial_thresh=val;
-}
-void modifygauss(int val,void* dat){
-	algorithm_params* ap = (algorithm_params*)dat;
-	ap->m_line.gauss_blur = (float)val/10;
-}
-
 	void* cameramodule::thread(void* args){
 		cameramodule* module = (cameramodule*) args;
 		int leftCam = atoi(module->m_cfg.dev_cam_left);
@@ -36,17 +27,6 @@ void modifygauss(int val,void* dat){
 			Logger::log(module->m_moduleid,LOGGER_ERROR,"Unable to open right camera!");
 		}
 		module->m_parameters->calibration_mode = CALIBRATE_LINE_DETECTOR;
-		namedWindow("left");
-		createTrackbar("init thresh","left", &module->m_parameters->m_line.initial_thresh,255,
-			modifyinitialthresh,module->m_parameters);		
-		int gauss = module->m_parameters->m_line.gauss_blur*10;
-		createTrackbar("blur","left", &gauss,200,
-			modifygauss,module->m_parameters);     	
-		createTrackbar("canny thresh","left", &module->m_parameters->calibration_mode.,255,
-			modifyinitialthresh,module->m_parameters);		
-		createTrackbar("init thresh","left", &module->m_parameters->calibration_mode.initial_thresh,255,
-			modifyinitialthresh,module->m_parameters);		
-
 		module->running=true;
 		while(module->running){
 			module->runCamera(&m_left, &m_right);
@@ -62,8 +42,11 @@ void modifygauss(int val,void* dat){
 		using namespace cv;
 		VideoCapture left=*L,
 			right = *R;
-
-		if(!left.isOpened() || !right.isOpened())
+		Mat grass = imread("grass4.jpg",CV_LOAD_IMAGE_COLOR);
+		
+		
+		
+		/*if(!left.isOpened() || !right.isOpened())
 			return;
 		left.grab();
 		right.grab();
@@ -71,7 +54,9 @@ void modifygauss(int val,void* dat){
 		if(!left.retrieve(leftPic)||
 			!right.retrieve(rightPic))
 			return;
-		
+		*/
+		Mat leftPic,rightPic;
+		leftPic=rightPic=grass;
 		if(m_parameters->m_left.calibrated){
 			stereomap SM = m_parameters->m_calib.SM;
 			remap(leftPic.clone(),leftPic,SM.map1x,SM.map1y,INTER_LINEAR,BORDER_CONSTANT,Scalar());
