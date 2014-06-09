@@ -17,7 +17,6 @@ void initialize(){
 
 
 void input(char* data, int len){
-  Serial.println("RESET");
     digitalWrite(MOTOR_PIN,HIGH);
     delay(500);
     digitalWrite(MOTOR_PIN,LOW);

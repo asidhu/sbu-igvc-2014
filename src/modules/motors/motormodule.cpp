@@ -31,7 +31,7 @@
 			char buff[64];
 			int left_power = (int)(std::abs(m_ctrl.left_power)*m_ctrl.throttle*0x7f);
 			int right_power = (int)(std::abs(m_ctrl.right_power)*m_ctrl.throttle*0x7f);
-			char LEFT = (m_ctrl.left_power >0)?'A':'a';
+			char LEFT = (m_ctrl.left_power >0)?'a':'A';
 			char RIGHT = (m_ctrl.right_power > 0)?'B':'b';
 			if(m_ctrl.safety){
 				left_power=0;
@@ -54,7 +54,7 @@
 				sscanf(buff,"?E\r%x\r%x",&internal, &battery);
 				float iV = internal*28.5f/256;
 				float bV = battery*55.f/256;
-				Logger::log(m_moduleid,LOGGER_INFO,"Motor voltage:Int %f Bat:%f",iV,bV);	
+				//Logger::log(m_moduleid,LOGGER_INFO,"Motor voltage:Int %f Bat:%f",iV,bV);	
 			}
 		}
 		close(dev_fd);

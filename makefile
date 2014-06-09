@@ -2,7 +2,7 @@ CC=gcc
 MAKE= make
 CFLAGS:=-lstdc++ -lpthread -lm  -Wall -g
 INCLUDE:=-Isrc/ -Ilib/ -I/usr/include/  $(shell pkg-config --cflags opencv)
-MODULES = cpuinfo network arduino imu joystick motors gps
+MODULES = cpuinfo network arduino imu joystick motors gps navigation
 
 CPUINFOCPP := $(wildcard src/modules/cpuinfo/*.cpp)
 CPUINFOOBJ := $(addprefix obj/,$(notdir $(CPUINFOCPP:.cpp=.o)))

@@ -85,7 +85,7 @@ void gpsmodule::pushEvent(event* evt){
   if (evt->m_eventflag & EFLAG_GPSRAW && 
       evt->m_eventflag & EFLAG_ARDUINORAW) {
     arduinodata* data = (arduinodata*)(evt->m_data);
-    Logger::log(m_moduleid,LOGGER_INFO,data->data);
+   // Logger::log(m_moduleid,LOGGER_INFO,data->data);
     int num_gps = m_gpsdata.num_gps;
     if (data->data[0]==ARDUINO_TAG_GPS) {
       int gps_id; // which of the 3 GPS units sent data

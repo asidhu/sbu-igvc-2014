@@ -152,31 +152,24 @@ cv::Mat thresh_test(cv::Mat& img, int b, int g, int r, int range){
 cv::Mat lineDetector(cv::Mat& img,  std::vector<cv::Mat>& debug_images){
 	using namespace cv;
 	Mat tst = img.clone();
-	Mat channels[3];
+	Mat blue;
 		debug_images.push_back(img);
 
 	medianBlur(tst,tst, 5);
-	split(tst,channels);
-	Mat blue = channels[0],green=channels[1],red=channels[2];
 	Mat edges = blue.clone();
-
-	threshold(blue,blue,130,255,0);
-	threshold(green,green,130,255,0);
-	threshold(red,red,130,255,0);
-
-		
-	bitwise_and(green,red,green);
-	bitwise_and(blue,green,blue);	
-
+	Mat grass = thresh_test(tst,60,60,60,20);
+	for(int i=1;i<10;i++){
+		grass = grass + thresh_test(tst,60+20*i,60+20*i,60+20*i,20);
+	}
 	
-	Mat skel(blue.size(), CV_8UC1, Scalar(0));
+	Mat skel(grass.size(), CV_8UC1, Scalar(0));
 	Mat temp;
 	Mat eroded; 
 	Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
-		cvtColor(blue,tst,CV_GRAY2BGR);
-		debug_images.push_back(tst);
+		cvtColor(grass,tst,CV_GRAY2BGR);
+		debug_images.push_back(tst.clone());
 
-	dilate(blue,blue,element,Point(-1,-1),6);
+	dilate(grass,blue,element,Point(-1,-1),6);
 	blur(blue,blue,Size(12,12));
 //	GaussianBlur(blue,blue,Size(11,11),150,150);
 		cvtColor(blue,tst,CV_GRAY2BGR);

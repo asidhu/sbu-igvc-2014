@@ -12,6 +12,9 @@
 #include <iostream>
 #include <stdio.h>
 #include <cstring>
+#include <errno.h>
+#include <dirent.h>
+
 	void* arduinomodule::thread(void* args){
 		arduinomodule* module = (arduinomodule*) args;
 		module->m_device = openSerialPort(module->path,115200,0,0);
@@ -35,25 +38,29 @@
 				char outBuffer[1024];
 				if(my_cmd->arduino_flag==FLAG_RESET_MOTORS){
 					const char *msg = "M\n";
-					write(m_device,msg,2);
+					//write(m_device,msg,2);
 				}
 				
 				if(my_cmd->arduino_flag==FLAG_LEDS_FLASH){
 					const char *msg = "LF\n";
-					write(m_device,msg,2);
+					//write(m_device,msg,2);
 				}
 				if(my_cmd->arduino_flag==FLAG_LEDS_ON){
 					const char *msg = "LO\n";
-					write(m_device,msg,2);
+					//write(m_device,msg,2);
 				}
 				if(my_cmd->arduino_flag==FLAG_LEDS_OFF){
 					const char *msg = "LD\n";
-					write(m_device,msg,2);
+					//write(m_device,msg,2);
 				}
-				delete my_cmd;
 			}
 			incoming = read(m_device,buffer+size,buffsize-size);
 			if(incoming==-1){
+				if (errno == ENODEV) {
+				  alreadyUsed = -1;
+				  sleepms(m_moduleid * 50);
+				  findDev(path);
+				}
 				sleepms(10);
 				continue;
 			}
@@ -101,7 +108,7 @@
 	**/
 	void arduinomodule::initialize(uint32& listener_flag){
 	        listener_flag |= EFLAG_ARDUINOCMD;
-		readPathConfig(cfgfile, m_moduleid, path);
+		readPathConfig(cfgfile, path);
 		initializeReader();
 	}
 
@@ -119,7 +126,6 @@
 	void arduinomodule::update(bot_info* data){
 		while(!m_sent_events.empty()){
 			m_recycler.push_back(m_sent_events.back());
-			m_sent_events.pop_back();
 			m_sent_events.pop_back();
 		}
 		while(!m_events.empty()){
@@ -146,3 +152,22 @@
 		}	
 	}
 	const char* arduinomodule::myName="Arduino Module";
+
+void arduinomodule::findDev(char *path) {
+  struct dirent *ent;
+  DIR *dd = opendir(DIRPATH);
+
+  int n;
+  if (dd != NULL) {
+    while ((ent = readdir(dd)) != NULL) {
+      if (sscanf(ent->d_name, "DEVROOT%d", &n) == 1) {
+	if (alreadyUsed != n) {
+	  sprintf(path, "%s/%s", DIRPATH, ent->d_name);
+	  alreadyUsed = n;
+	}
+      }
+    }
+  }
+}
+
+int arduinomodule::alreadyUsed = -1;

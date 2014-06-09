@@ -3,9 +3,10 @@
 #include "rapidxml/rapidxml.hpp"
 #include <cstring>
 #include <cstdio>
+#include <dirent.h>
 #include "osutils.h"
 
-void readPathConfig(char *cfgfile, int m_id, char *path) {
+void readPathConfig(char *cfgfile, char *path) {
   char buff[8192];
   long size = 8192;
 
