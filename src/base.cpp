@@ -8,6 +8,7 @@
 #include "modules/joystick/joystickmodule.h"
 #include "modules/motors/motormodule.h"
 //	#include "modules/camera/cameramodule.h"
+#include "modules/navigation/navigationmodule.h"
 #include "modules/gps/gpsmodule.h"
 #include "modules/arduino/arduinomodule.h"
 #include "osutils.h"
@@ -47,6 +48,8 @@ void bot::initialize(){
 //	m_modules.push_back(new cameramodule());
 	m_modules.push_back(new debugmodule(&std::cout));
 	motormodule* mm = new motormodule();
+	navigationmodule* nm = new navigationmodule(&mm->m_ctrl);
+	m_modules.push_back(nm);
 	m_modules.push_back(mm);
 	Logger::initialize("cfg/logger.cfg",&m_modules);
 	

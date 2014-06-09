@@ -1,3 +1,4 @@
+#include "logger.h"
 #include "modules/navigation/navigationmodule.h"
 #include "event.h"
 #include "base.h"
@@ -32,10 +33,14 @@
 		listener_flag|=	EFLAG_JOYSTICKEVT;
 		//Get GPS and IMU events for localization and pose estimation
 		listener_flag|= EFLAG_GPSDATA | EFLAG_IMUDATA;
+		currentWaypoint = (waypointdata*)malloc(sizeof(waypointdata));
 		currentWaypoint->lat=42.67816288333;
-		currentWaypoint->lon=
+		currentWaypoint->lon=83.19547489;
 		currentWaypoint->nextWaypoint=NULL;
+		auto1_down=auto2_down=0;
+		running=true;
 		spawnThread(navigationmodule::thread,this);
+
 	}
 
 
@@ -46,13 +51,33 @@
 		3) clean up any data from your previously published events (event objects are deleted after they are pushed be careful about that).
 	**/
 	void navigationmodule::update(bot_info* data){
+		while(!m_sentcmds.empty()){
+			delete m_sentcmds.back();
+			m_sentcmds.pop_back();
+		}
 		if(initializeMotors){
 			arduinocmd* cmd = (arduinocmd*)malloc(sizeof(arduinocmd));
 			cmd->arduino_flag = FLAG_RESET_MOTORS;
 			event* evt = makeEvent(EFLAG_ARDUINOCMD,cmd);
 			data->m_eventQueue.push_back(evt);	
 			initializeMotors=false;
+			m_sentcmds.push_back(cmd);
+		}
+		if(m_navmode ==MODE_MANUAL){
+			arduinocmd* cmd = (arduinocmd*)malloc(sizeof(arduinocmd));
+			cmd->arduino_flag = FLAG_LEDS_ON;
+			event* evt = makeEvent(EFLAG_ARDUINOCMD,cmd);
+			data->m_eventQueue.push_back(evt);	
+			m_sentcmds.push_back(cmd);
+
 		}	
+		if(m_navmode ==MODE_AUTONOMOUS){
+			arduinocmd* cmd = (arduinocmd*)malloc(sizeof(arduinocmd));
+			cmd->arduino_flag = FLAG_LEDS_FLASH;
+			event* evt = makeEvent(EFLAG_ARDUINOCMD,cmd);
+			data->m_eventQueue.push_back(evt);	
+			m_sentcmds.push_back(cmd);
+		}
 	}
 	/**
 		Rules:
@@ -63,24 +88,48 @@
 	void navigationmodule::pushEvent(event* evt){
 		switch(evt->m_eventflag){
 			case EFLAG_JOYSTICKEVT:
-				if(m_navmode == MODE_MANUAL){
-					joystickevent* event = (joystickevent*)evt->m_data;
-					processJSEvent(event);
-						
-				}
+					processJSEvent((joystickevent*)evt->m_data);
 			break;
 			case EFLAG_IMUDATA:
-                 processIMUEvent((imudata*)evt->m_data);
+                 	processIMUEvent((imudata*)evt->m_data);
 				
 			break;
 			case EFLAG_GPSDATA:
-				
+			processGPSEvent((gpsdata*)evt->m_data);		
+			break;
+			case EFLAG_TERMINATE:
+			running=false;
 			break;
 		}	
 	}
 	
 	void navigationmodule::processJSEvent(joystickevent* evt){
+		if(m_navmode==MODE_AUTONOMOUS && (evt->type != BUTTON_AUTO1
+			&& evt->type != BUTTON_AUTO2))
+			return; 
 		switch(evt->type){
+			case BUTTON_AUTO1:
+				auto1_down=evt->btnValue;
+			case BUTTON_AUTO2:
+				if(evt->type==BUTTON_AUTO2)
+					auto2_down=evt->btnValue;
+				if(auto1_down && auto2_down){
+					if(m_navmode == MODE_MANUAL){
+						m_navmode= MODE_AUTONOMOUS;
+						auto1_down=auto2_down=0;
+						m_motors->left_power=m_motors->right_power=0;
+						m_motors->safety=true;
+						Logger::log(m_moduleid,LOGGER_INFO,"Switching to Autonomous Mode...");
+					}
+					else if(m_navmode == MODE_AUTONOMOUS){
+						m_navmode= MODE_MANUAL;
+						auto1_down=auto2_down=0;
+						m_motors->left_power=m_motors->right_power=0;
+						m_motors->safety=true;
+						Logger::log(m_moduleid,LOGGER_INFO,"Switching to Manual Mode...");
+					}
+				}
+			break;
 			case BUTTON_SAFETY:
 				if(m_motors->offline){
 					initializeMotors=true;	
@@ -123,12 +172,12 @@
 	
 	}
 
-	void navigationmodule::processIMUEvent(imudata*){
-         float tempHeading=imudate->heading;
-         tempHeading+=7.52;
-         if ((tempHeading-360)>=0)
-         {tempHeading-=360;}
-         currentHeading=tempHeading;
+	void navigationmodule::processIMUEvent(imudata* evt){
+         float tempHeading=evt->heading;
+	 
+	 tempHeading=toDegrees(tempHeading+2.58+M_PI);
+	 tempHeading+=7.52;         
+         currentHeading=fmod(tempHeading,360.f);
          modified=true;
 	}
 	
@@ -139,18 +188,22 @@
 		return NULL;
 	}
 	
-	void navigate()
+	void navigationmodule::navigate()
 	{
          while(running)
          {
-               if(modified)
+               if(modified && m_navmode == MODE_AUTONOMOUS)
                {
-                 modified=false;
+               	 m_motors->safety=false;
+		 modified=false;
                  float angleToWaypoint=angle(currentLat,currentLon,currentWaypoint->lat,currentWaypoint->lon);
                  angleToWaypoint*=-1;
                  angleToWaypoint+=90;
                  float difference=angleToWaypoint-currentHeading;
-                 if (difference>2)
+                 Logger::log(m_moduleid,LOGGER_INFO,"Angle to Waypoint: %f Heading: %f",angleToWaypoint,currentHeading);
+		Logger::log(m_moduleid,LOGGER_INFO,"LP:%f RP:%f",m_motors->left_power,m_motors->right_power);
+
+		 if (difference>2)
                  {
                     if (difference<180)
                     {
@@ -179,13 +232,16 @@
                   difference=((float)abs((double)difference));
                   if (difference>180)
                   {difference=360-difference;}
-                  m_motors->throttle = ((difference/180)*0.5);
+                  m_motors->throttle = .2;//((difference/180)*1.0);
                }  
-    }
+    	   }
+   	}
 	
-	void navigationmodule::processGPSEvent(gpsdata*){
-         currentLat=gpsdata->latitude;
-         currentLon=gpsdata->longitude;
+	void navigationmodule::processGPSEvent(gpsdata* evt){
+         float latitude = evt->gps[0].latitude;
+         float longitude = evt->gps[0].longitude;
+	 currentLat=latitude;
+         currentLon=longitude;
          modified=true;
 	}
 const char* navigationmodule::myName="Navigation Module";

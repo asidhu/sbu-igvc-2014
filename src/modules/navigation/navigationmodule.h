@@ -10,6 +10,7 @@ class joystickevent;
 struct gpsdata;
 struct imudata;
 struct waypointdata;
+struct arduinocmd;
 class navigationmodule:public module{
 	private:
 	static const char* myName;
@@ -18,13 +19,15 @@ class navigationmodule:public module{
 	void processJSEvent(joystickevent*);
 	void processGPSEvent(gpsdata*);
 	void processIMUEvent(imudata*);
+	void navigate();
 	volatile float currentHeading;
 	volatile float currentLat;
 	volatile float currentLon;
+	std::vector<arduinocmd*> m_sentcmds;
     volatile bool modified;
 	volatile bool running;
 	waypointdata* currentWaypoint;
-	
+	int auto1_down,auto2_down;	
 	public:
 	int m_navmode;
 	void initialize(uint32&);
