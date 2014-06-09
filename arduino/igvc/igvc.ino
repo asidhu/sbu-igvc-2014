@@ -17,10 +17,10 @@
  Use defines to allow certain devices to be handled by this arduino.
  */
 
-//#define RAZORIMU
-#define MOTORS
-//#define GPS_TOGGLE
-#define LEDS_TOGGLE
+#define RAZORIMU
+//#define MOTORS
+#define GPS_TOGGLE
+//#define LEDS_TOGGLE
 /*
 ====DEVICE CONFIG====
  Device specific configuration.
@@ -90,9 +90,10 @@ void updateDevices();
 void loop()
 {
 
-
+#if defined(LEDS_TOGGLE) || defined(MOTORS)
   if(Serial.available()){
     char num = Serial.readBytes(buffer+numRead,BUFFERLENGTH-numRead);
+    Serial.println("WTF");
     int last=0;
     for(int i=numRead;i<numRead+num;i++){
       if(buffer[i]==EOLCHAR){
@@ -102,6 +103,7 @@ void loop()
     }
     numRead=0;
   } 
+ #endif
   updateDevices();
   delay(SLEEPTIME);
 }

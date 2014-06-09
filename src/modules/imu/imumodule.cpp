@@ -30,9 +30,9 @@
 
 	void imumodule::printEvent(std::ostream& out, const event* evt){
 		imudata* imu = (imudata*)(evt->m_data);
-		out<< "imu:ACCEL"<< imu->A_X <<" " << imu->A_Y << " " << imu->A_Z;
-		out<< "imu:HEADING"<< imu->heading;
-		out<< "imu:GYRO"<< imu->G_Y <<" " << imu->G_P << " " << imu->G_R << std::endl;
+		out<< "imu:ACCEL:"<< imu->A_X <<" " << imu->A_Y << " " << imu->A_Z<<std::endl;
+		out<< "imu:HEADING:"<< imu->heading<<std::endl;
+		out<< "imu:GYRO:"<< imu->G_Y <<" " << imu->G_P << " " << imu->G_R << std::endl;
 	}
 	/**
 		Rules:

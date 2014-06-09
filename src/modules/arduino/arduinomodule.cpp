@@ -35,22 +35,21 @@
 				char outBuffer[1024];
 				if(my_cmd->arduino_flag==FLAG_RESET_MOTORS){
 					const char *msg = "M\n";
-					write(m_device,msg,2);
+					//write(m_device,msg,2);
 				}
 				
 				if(my_cmd->arduino_flag==FLAG_LEDS_FLASH){
 					const char *msg = "LF\n";
-					write(m_device,msg,2);
+					//write(m_device,msg,2);
 				}
 				if(my_cmd->arduino_flag==FLAG_LEDS_ON){
 					const char *msg = "LO\n";
-					write(m_device,msg,2);
+					//write(m_device,msg,2);
 				}
 				if(my_cmd->arduino_flag==FLAG_LEDS_OFF){
 					const char *msg = "LD\n";
-					write(m_device,msg,2);
+					//write(m_device,msg,2);
 				}
-				delete my_cmd;
 			}
 			incoming = read(m_device,buffer+size,buffsize-size);
 			if(incoming==-1){
@@ -119,7 +118,6 @@
 	void arduinomodule::update(bot_info* data){
 		while(!m_sent_events.empty()){
 			m_recycler.push_back(m_sent_events.back());
-			m_sent_events.pop_back();
 			m_sent_events.pop_back();
 		}
 		while(!m_events.empty()){
