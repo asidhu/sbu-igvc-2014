@@ -31,7 +31,7 @@ private:
 			m_recycler.pop_back();
 			return out;
 		}
-	}	
+	}
 public:
 	void initialize(uint32&);
 	void update(bot_info*);

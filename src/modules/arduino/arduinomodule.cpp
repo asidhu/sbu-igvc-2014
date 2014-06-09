@@ -12,6 +12,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <cstring>
+#include <errno.h>
+
 	void* arduinomodule::thread(void* args){
 		arduinomodule* module = (arduinomodule*) args;
 		module->m_device = openSerialPort(module->path,115200,0,0);
@@ -54,6 +56,10 @@
 			}
 			incoming = read(m_device,buffer+size,buffsize-size);
 			if(incoming==-1){
+				if (errno == ENODEV) {
+				  sleepms(m_moduleid * 1000);
+				  findDev(path);
+				}
 				sleepms(10);
 				continue;
 			}
@@ -101,7 +107,7 @@
 	**/
 	void arduinomodule::initialize(uint32& listener_flag){
 	        listener_flag |= EFLAG_ARDUINOCMD;
-		readPathConfig(cfgfile, m_moduleid, path);
+		readPathConfig(cfgfile, path);
 		initializeReader();
 	}
 

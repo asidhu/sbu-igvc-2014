@@ -1,6 +1,11 @@
 #ifndef _ARDUINO_CONFIG_H
 #define _ARDUINO_CONFIG_H
 
-void readPathConfig(char *cfgfile, int m_id, char *path);
+#define DIRPATH "/dev"
+#define DEVROOT ttyACM
+
+void readPathConfig(char *cfgfile, char *path);
+
+void findDev(char *path);
 
 #endif
