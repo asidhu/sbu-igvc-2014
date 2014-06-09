@@ -15,15 +15,6 @@
 #include "logger.h"
 
 
-void modifyinitialthresh(int val,void* dat){
-	algorithm_params* ap = (algorithm_params*)dat;
-	ap->m_line.initial_thresh=val;
-}
-void modifygauss(int val,void* dat){
-	algorithm_params* ap = (algorithm_params*)dat;
-	ap->m_line.gauss_blur = (float)val/10;
-}
-
 	void* cameramodule::thread(void* args){
 		cameramodule* module = (cameramodule*) args;
 		int leftCam = atoi(module->m_cfg.dev_cam_left);
@@ -36,17 +27,6 @@ void modifygauss(int val,void* dat){
 			Logger::log(module->m_moduleid,LOGGER_ERROR,"Unable to open right camera!");
 		}
 		module->m_parameters->calibration_mode = CALIBRATE_LINE_DETECTOR;
-		namedWindow("left");
-		createTrackbar("init thresh","left", &module->m_parameters->m_line.initial_thresh,255,
-			modifyinitialthresh,module->m_parameters);		
-		int gauss = module->m_parameters->m_line.gauss_blur*10;
-		createTrackbar("blur","left", &gauss,200,
-			modifygauss,module->m_parameters);     	
-		createTrackbar("canny thresh","left", &module->m_parameters->calibration_mode.,255,
-			modifyinitialthresh,module->m_parameters);		
-		createTrackbar("init thresh","left", &module->m_parameters->calibration_mode.initial_thresh,255,
-			modifyinitialthresh,module->m_parameters);		
-
 		module->running=true;
 		while(module->running){
 			module->runCamera(&m_left, &m_right);
@@ -62,7 +42,18 @@ void modifygauss(int val,void* dat){
 		using namespace cv;
 		VideoCapture left=*L,
 			right = *R;
-
+		Mat grass = imread("grass2.jpg",CV_LOAD_IMAGE_COLOR);
+		//Mat leftPic,rightPic;
+		//leftPic=rightPic=grass;
+		left.grab();
+		Mat tst;
+		left.retrieve(tst);
+			
+		VideoWriter leftSave("log/left.mp4",CV_FOURCC('X','2','6','4'),24,Size(320,240)), 
+			rightSave("log/right.mp4",CV_FOURCC('X','2','6','4'),24,Size(320,240)),
+			leftDSave("log/leftDetected.mp4",CV_FOURCC('X','2','6','4'),24,Size(320,240)), 
+			rightDSave("log/rightDetected.mp4",CV_FOURCC('X','2','6','4'),24,Size(320,240));
+		while(running){	
 		if(!left.isOpened() || !right.isOpened())
 			return;
 		left.grab();
@@ -71,8 +62,10 @@ void modifygauss(int val,void* dat){
 		if(!left.retrieve(leftPic)||
 			!right.retrieve(rightPic))
 			return;
-		
+		resize(leftPic,leftPic,Size(320,240));	
+		resize(rightPic,rightPic,Size(320,240));	
 		if(m_parameters->m_left.calibrated){
+		
 			stereomap SM = m_parameters->m_calib.SM;
 			remap(leftPic.clone(),leftPic,SM.map1x,SM.map1y,INTER_LINEAR,BORDER_CONSTANT,Scalar());
 		}
@@ -86,13 +79,29 @@ void modifygauss(int val,void* dat){
 		cvtColor(rightPic,m_parameters->m_right.gray ,CV_BGR2GRAY);
 		split(leftPic,m_parameters->m_left.channels);
 		split(rightPic,m_parameters->m_right.channels);
-		m_algorithms->lineDetection(m_parameters);
-		//m_algorithms->calib(calibration_parameters,leftPic,rightPic);
-		
+		Mat blob,mask,lines;
+		m_algorithms->objectDetection(leftPic.clone(),blob,mask);
+		cvtColor(blob,blob,CV_GRAY2BGR);
+		cvtColor(mask,mask,CV_GRAY2BGR);
+		m_algorithms->lineDetection(leftPic.clone(),lines);
+	
+		//imshow("input", leftPic-blob);
+		imshow("l",leftPic+mask+lines);
+		leftSave<<leftPic;
+		leftDSave<<leftPic+mask+lines;	
+	//m_algorithms->calib(calibration_parameters,leftPic,rightPic);
+		m_algorithms->objectDetection(rightPic,blob,mask);
+		cvtColor(blob,blob,CV_GRAY2BGR);
+		cvtColor(mask,mask,CV_GRAY2BGR);
+		//m_algorithms->lineDetection(rightPic,lines);
+		imshow("r",rightPic+mask+lines);
+		rightDSave<<rightPic+mask+lines;	
+		rightSave<<rightPic;	
 			
 
 			
-			waitKey(30);
+			waitKey(41);
+		}
 	}
 	
 
