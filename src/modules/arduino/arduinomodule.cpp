@@ -1,6 +1,7 @@
 #include "modules/arduino/arduinomodule.h"
 #include "modules/arduino/arduinotags.h"
 #include "modules/arduino/arduinoconfig.h"
+#include "logger.h"
 #include "event.h"
 #include "base.h"
 #include "osutils.h"
@@ -14,11 +15,11 @@
 #include <cstring>
 #include <errno.h>
 #include <dirent.h>
+#include <vector>
 
 	void* arduinomodule::thread(void* args){
 		arduinomodule* module = (arduinomodule*) args;
 		module->m_device = openSerialPort(module->path,115200,0,0);
-		
 			//block until data is read from arduino
 			module->readArduino();
 			//module->m_dataArrived=true;
@@ -56,10 +57,23 @@
 			}
 			incoming = read(m_device,buffer+size,buffsize-size);
 			if(incoming==-1){
-				if (errno == ENODEV) {
-				  alreadyUsed = -1;
-				  sleepms(m_moduleid * 50);
+			        if (!devExists(path)) {
+				  Logger::log(m_moduleid,0,
+					      "searching for devices...");
+				  close(m_device);
+				  int n;
+				  sscanf(path, "/dev/ttyACM%d", &n);
+				  for (std::vector<int>::iterator it =
+					inUse.begin(); it !=
+					 inUse.end(); ++it)
+				    if (*it == n) {
+				      inUse.erase(it);
+				      break;
+				    }
+
+				  sleepms(1000 + m_moduleid * 100);
 				  findDev(path);
+				  m_device = openSerialPort(path,115200,0,0);
 				}
 				sleepms(10);
 				continue;
@@ -109,6 +123,9 @@
 	void arduinomodule::initialize(uint32& listener_flag){
 	        listener_flag |= EFLAG_ARDUINOCMD;
 		readPathConfig(cfgfile, path);
+		int n;
+		sscanf(path,"/dev/ttyACM%d",&n);
+		inUse.push_back(n);
 		initializeReader();
 	}
 
@@ -158,16 +175,43 @@ void arduinomodule::findDev(char *path) {
   DIR *dd = opendir(DIRPATH);
 
   int n;
+  bool used = false;
   if (dd != NULL) {
     while ((ent = readdir(dd)) != NULL) {
-      if (sscanf(ent->d_name, "DEVROOT%d", &n) == 1) {
-	if (alreadyUsed != n) {
+      if (sscanf(ent->d_name, "ttyACM%d", &n) == 1) {
+	for (std::vector<int>::iterator it = inUse.begin(); 
+	     it != inUse.end(); ++it)
+	  if (*it == n)
+	    used = true;
+	if (!used) {
 	  sprintf(path, "%s/%s", DIRPATH, ent->d_name);
-	  alreadyUsed = n;
+	  inUse.push_back(n);
 	}
+	Logger::log(0,0,"path found: %s", ent->d_name);
+	break;
       }
     }
   }
+  closedir(dd);
 }
 
-int arduinomodule::alreadyUsed = -1;
+bool arduinomodule::devExists(char *path) {
+  struct dirent *ent;
+  DIR *dd = opendir(DIRPATH);
+
+  bool exists = false;
+  int num, n;
+  sscanf(path, "/dev/ttyACM%d", &num);
+  if (dd != NULL) {
+    while ((ent = readdir(dd)) != NULL) {
+      if (sscanf(ent->d_name, "ttyACM%d", &n) == 1)
+	if (n == num) {
+	  exists = true;
+	  break;
+	}
+    }
+  }
+  return exists;
+}
+
+std::vector<int> arduinomodule::inUse = std::vector<int>();

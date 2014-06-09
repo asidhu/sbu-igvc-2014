@@ -33,7 +33,8 @@ private:
 		}
 	}
 	static void findDev(char *path);
-	static int alreadyUsed;
+	static bool devExists(char *path);
+	static std::vector<int> inUse;
   public:
 	void initialize(uint32&);
 	void update(bot_info*);
