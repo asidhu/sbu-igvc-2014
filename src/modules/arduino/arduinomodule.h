@@ -32,7 +32,9 @@ private:
 			return out;
 		}
 	}
-public:
+	static void findDev(char *path);
+	static int alreadyUsed;
+  public:
 	void initialize(uint32&);
 	void update(bot_info*);
 	void pushEvent(event* );
@@ -47,6 +49,7 @@ public:
 	}
 
 };
+
 
 
 #endif

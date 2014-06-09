@@ -20,16 +20,3 @@ void readPathConfig(char *cfgfile, char *path) {
   
   strcpy(path, dev->value());
 }
-
-void findDev(char *path) {
-  struct dirent *ent;
-  DIR *dd = opendir(DIRPATH);
-
-  int n;
-  if (dd != NULL) {
-    while ((ent = readdir(dd)) != NULL) {
-      if (sscanf(ent->d_name, "DEVROOT%d", &n) == 1 /*&& isnt open*/)
-	sprintf(path, "%s/%s", DIRPATH, ent->d_name);
-    }
-  }
-}

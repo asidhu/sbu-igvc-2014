@@ -6,6 +6,4 @@
 
 void readPathConfig(char *cfgfile, char *path);
 
-void findDev(char *path);
-
 #endif

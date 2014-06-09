@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <cstring>
 #include <errno.h>
+#include <dirent.h>
 
 	void* arduinomodule::thread(void* args){
 		arduinomodule* module = (arduinomodule*) args;
@@ -56,7 +57,8 @@
 			incoming = read(m_device,buffer+size,buffsize-size);
 			if(incoming==-1){
 				if (errno == ENODEV) {
-				  sleepms(m_moduleid * 1000);
+				  alreadyUsed = -1;
+				  sleepms(m_moduleid * 50);
 				  findDev(path);
 				}
 				sleepms(10);
@@ -150,3 +152,22 @@
 		}	
 	}
 	const char* arduinomodule::myName="Arduino Module";
+
+void arduinomodule::findDev(char *path) {
+  struct dirent *ent;
+  DIR *dd = opendir(DIRPATH);
+
+  int n;
+  if (dd != NULL) {
+    while ((ent = readdir(dd)) != NULL) {
+      if (sscanf(ent->d_name, "DEVROOT%d", &n) == 1) {
+	if (alreadyUsed != n) {
+	  sprintf(path, "%s/%s", DIRPATH, ent->d_name);
+	  alreadyUsed = n;
+	}
+      }
+    }
+  }
+}
+
+int arduinomodule::alreadyUsed = -1;
