@@ -71,7 +71,9 @@
 		cvtColor(rightPic,m_parameters->m_right.gray ,CV_BGR2GRAY);
 		split(leftPic,m_parameters->m_left.channels);
 		split(rightPic,m_parameters->m_right.channels);
-		m_algorithms->lineDetection(m_parameters);
+		Mat mask=m_algorithms->objectDetection(m_parameters);
+		imshow("tst",leftPic-mask);
+		//m_algorithms->lineDetection(m_parameters);
 		//m_algorithms->calib(calibration_parameters,leftPic,rightPic);
 		
 			

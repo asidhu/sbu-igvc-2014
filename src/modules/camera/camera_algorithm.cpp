@@ -125,17 +125,22 @@ void camera_algorithm::performCalibration(algorithm_params* params){
 	params->m_left.calibrated=true;
 	params->m_right.calibrated=true;
 }
+//sort by y
+bool sortLines(cv::Vec4i first, cv::Vec4i second){
+	return (std::min(first[1],first[3]) < std::min(second[1],second[3]));	
+}
 
 
 void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& debug_images){
 	using namespace cv;
 	line_detector_params L = param->m_line;
+	Mat tst = img.clone();
+	Mat channels[3];
 	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		debug_images.push_back(img);
 	}
-	Mat tst = img.clone();
-	Mat channels[3];
-	medianBlur(tst,tst, 3);
+
+	medianBlur(tst,tst, 5);
 	split(tst,channels);
 	Mat blue = channels[0],green=channels[1],red=channels[2];
 	Mat edges = blue.clone();
@@ -151,9 +156,9 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 	blue=HSV;
 	imshow("white",blue);
 */	
-	threshold(blue,blue,180,255,0);
-	threshold(green,green,180,255,0);
-	threshold(red,red,180,255,0);
+	threshold(blue,blue,130,255,0);
+	threshold(green,green,130,255,0);
+	threshold(red,red,130,255,0);
 
 		
 	bitwise_and(green,red,green);
@@ -171,7 +176,7 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 	}
 
 	dilate(blue,blue,element,Point(-1,-1),6);
-	blur(blue,blue,Size(9,9));
+	blur(blue,blue,Size(12,12));
 //	GaussianBlur(blue,blue,Size(11,11),150,150);
 	if(param->calibration_mode==CALIBRATE_LINE_DETECTOR){
 		Mat tst;
@@ -208,10 +213,27 @@ void lineDetector(cv::Mat& img, algorithm_params* param, std::vector<cv::Mat>& d
 	}
 	//GaussianBlur(edges,edges,Size(7,7),1.5,1.5);
 	std::vector<Vec4i> lines;
-	HoughLinesP(skel,lines,1,CV_PI/180,30,40,5);
+	HoughLinesP(skel,lines,1,CV_PI/180,35,20,5);
 	Logger::log(0,LOGGER_INFO,"CAMERA: LINES DETECTED %d",lines.size());
 	Mat hough = img.clone();
-	if(lines.size()<50){
+	/*
+		manual algorithm that links lines
+	*/
+	for(int i=0;i<lines.size();i++){
+		if(lines[i][1]>lines[i][3]){
+			int x = lines[i][0],
+				y=lines[i][1];
+			lines[i][0]=lines[i][2];
+			lines[i][1]=lines[i][3];
+			lines[i][2]=x;
+			lines[i][3]=y;
+		}
+	}
+	std::sort(lines.begin(),lines.end(),sortLines);
+		
+	
+	
+	if(lines.size()<100){
 		for(size_t i=0;i<lines.size();i++){
 			Vec4i v = lines[i];
 			line(hough, Point(v[0],v[1]),Point(v[2],v[3]),Scalar(255),3,CV_AA);
@@ -256,3 +278,64 @@ void camera_algorithm::lineDetection(algorithm_params* params){
 }
 
 
+cv::Mat thresh_test(cv::Mat& img, int b, int g, int r, int range){
+	using namespace cv;
+	Mat channels[3];
+	split(img,channels);	
+	threshold(channels[0],channels[0],b-range,255,THRESH_TOZERO);
+	threshold(channels[0],channels[0],b+range,255,THRESH_TOZERO_INV);
+	threshold(channels[0],channels[0],1,255,THRESH_BINARY);
+	threshold(channels[1],channels[1],g-100,255,THRESH_TOZERO);
+	threshold(channels[1],channels[1],g+100,255,THRESH_TOZERO_INV);
+	threshold(channels[1],channels[1],1,255,THRESH_BINARY);
+	threshold(channels[2],channels[2],r-range,255,THRESH_TOZERO);
+	threshold(channels[2],channels[2],r+range,255,THRESH_TOZERO_INV);
+	threshold(channels[2],channels[2],1,255,THRESH_BINARY);
+	bitwise_and(channels[0],channels[1],channels[0]);
+	bitwise_and(channels[0],channels[2],channels[0]);	
+	return channels[0];
+	
+}
+
+
+cv::Mat camera_algorithm::objectDetection(algorithm_params* params){
+	using namespace cv;
+	Mat img = params->m_left.normal.clone();
+	//find orange
+	Mat orange,white;
+	Mat tst;
+	std::vector<Mat> m_debugs;
+	m_debugs.push_back(img.clone());
+	
+	medianBlur(img,img,9);
+	m_debugs.push_back(img);
+	orange = thresh_test(img,30,150,210,50);
+	white = thresh_test(img,255,255,255,50);
+
+	
+	Mat objs = white+orange;	
+	cvtColor(objs,tst,CV_GRAY2BGR);
+	m_debugs.push_back(tst.clone());
+
+	Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
+	dilate(objs,objs,element,Point(-1,1),5);
+	cvtColor(objs,tst,CV_GRAY2BGR);
+	m_debugs.push_back(tst.clone());
+	Mat blobs = objs.clone();
+	std::vector<std::vector<Point> > contours;
+  	std::vector<Vec4i> hierarchy;
+	findContours( objs, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+	std::vector<Rect> rects(contours.size());
+	std::vector<std::vector<Point> > contours_poly(contours.size());
+	for(int i=0;i<contours.size();i++){
+		approxPolyDP(Mat(contours[i]),contours_poly[i],3,true);
+		rects[i] = boundingRect(Mat(contours_poly[i]));
+		//rectangle(blobs,rects[i].tl(),rects[i].br(),Scalar(255),2,8,0);
+	}
+	cvtColor(blobs,tst,CV_GRAY2BGR);
+	m_debugs.push_back(tst.clone());
+	return tst;
+	//Mat m_display;
+	//paint_debug_images(m_debugs,3,m_display);
+	//imshow("left_objD",m_display);
+}
