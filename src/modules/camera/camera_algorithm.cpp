@@ -124,6 +124,7 @@ void camera_algorithm::performCalibration(algorithm_params* params){
 	params->m_calib.SM.Q=Q;	
 	params->m_left.calibrated=true;
 	params->m_right.calibrated=true;
+
 }
 //sort by y
 bool sortLines(cv::Vec4i first, cv::Vec4i second){
@@ -152,29 +153,40 @@ cv::Mat thresh_test(cv::Mat& img, int b, int g, int r, int range){
 cv::Mat lineDetector(cv::Mat& img,  std::vector<cv::Mat>& debug_images){
 	using namespace cv;
 	Mat tst = img.clone();
-	Mat blue;
+	Mat channels[3];
 		debug_images.push_back(img);
 
 	medianBlur(tst,tst, 5);
-	Mat edges = blue.clone();
-	Mat grass = thresh_test(tst,60,60,60,20);
-	for(int i=1;i<10;i++){
-		grass = grass + thresh_test(tst,60+20*i,60+20*i,60+20*i,20);
-	}
+		debug_images.push_back(tst.clone());
 	
-	Mat skel(grass.size(), CV_8UC1, Scalar(0));
+	split(tst,channels);
+	
+	
+
+	Mat blue = channels[0],green=channels[1],red=channels[2];
+	//Mat blue = thresh_test(tst,170,170,170,85);	
+	Mat edges = blue.clone();
+
+	threshold(blue,blue,110,255,0);
+	threshold(green,green,80,255,0);
+	threshold(red,red,80,255,0);
+
+	bitwise_and(green,red,green);
+	bitwise_and(blue,green,blue);	
+
+	Mat skel(blue.size(), CV_8UC1, Scalar(0));
 	Mat temp;
 	Mat eroded; 
 	Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
-		cvtColor(grass,tst,CV_GRAY2BGR);
+		cvtColor(blue,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst.clone());
 
-	dilate(grass,blue,element,Point(-1,-1),6);
-	blur(blue,blue,Size(12,12));
-//	GaussianBlur(blue,blue,Size(11,11),150,150);
+	dilate(blue,blue,element,Point(-1,-1),8);
+	//blur(blue,blue,Size(12,12));
+	//GaussianBlur(blue,blue,Size(11,11),150,150);
 		cvtColor(blue,tst,CV_GRAY2BGR);
-		debug_images.push_back(tst);
-	
+		debug_images.push_back(tst.clone());
+	Mat blue2 = blue.clone();	
 	
 	int iterations=0;
 	bool done;              
@@ -191,14 +203,12 @@ cv::Mat lineDetector(cv::Mat& img,  std::vector<cv::Mat>& debug_images){
 	
 	//GaussianBlur(skel,skel,Size(3,3),1.5,1.5);
 		cvtColor(skel,tst,CV_GRAY2BGR);
-		debug_images.push_back(tst);
+		debug_images.push_back(tst.clone());
 	dilate(skel,skel,element);
 	//Canny(skel,edges,20,150,3);
-		cvtColor(edges,tst,CV_GRAY2BGR);
-		debug_images.push_back(tst);
 	//GaussianBlur(edges,edges,Size(7,7),1.5,1.5);
 	std::vector<Vec4i> lines;
-	HoughLinesP(skel,lines,1,CV_PI/180,35,30,5);
+	HoughLinesP(skel,lines,1,CV_PI/180,20,10,8);
 	Logger::log(0,LOGGER_INFO,"CAMERA: LINES DETECTED %d",lines.size());
 	Mat hough(img.size(),img.type(),Scalar(0,0,0));
 	/*
@@ -252,8 +262,9 @@ void camera_algorithm::lineDetection(cv::Mat img, cv::Mat& lines){
 	std::vector<Mat> m_debug_imgs;
 	lines =lineDetector(img,m_debug_imgs);
 		Mat m_display;
-		paint_debug_images(m_debug_imgs,3,m_display);
+		paint_debug_images(m_debug_imgs,4,m_display);
 		imshow("left",m_display);
+	moveWindow("left",0,0);
 }
 
 
@@ -269,7 +280,7 @@ void camera_algorithm::objectDetection(cv::Mat img, cv::Mat& blobs, cv::Mat& rec
 	Mat findGreenBasket = thresh_test(img,30,60,40,35);
 	Mat mask;
 	cvtColor(green,tst,CV_GRAY2BGR);	
-	//m_debugs.push_back(tst.clone());
+	m_debugs.push_back(tst.clone());
 	mask=tst;
 	cvtColor(findGreenBasket,tst,CV_GRAY2BGR);
 	//m_debugs.push_back(tst.clone());
@@ -304,6 +315,7 @@ void camera_algorithm::objectDetection(cv::Mat img, cv::Mat& blobs, cv::Mat& rec
 	for(int i=0;i<contours.size();i++){
 		approxPolyDP(Mat(contours[i]),contours_poly[i],3,true);
 		rects[i] = boundingRect(Mat(contours_poly[i]));
+		if(rects[i].area()>1200)
 		rectangle(rect,rects[i].tl(),rects[i].br(),Scalar(255,255,255),2,8,0);
 	}
 	

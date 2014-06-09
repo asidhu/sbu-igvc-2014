@@ -42,11 +42,19 @@
 		using namespace cv;
 		VideoCapture left=*L,
 			right = *R;
-		Mat grass = imread("grass5.jpg",CV_LOAD_IMAGE_COLOR);
-		
-		
-		
-		/*if(!left.isOpened() || !right.isOpened())
+		Mat grass = imread("grass2.jpg",CV_LOAD_IMAGE_COLOR);
+		//Mat leftPic,rightPic;
+		//leftPic=rightPic=grass;
+		left.grab();
+		Mat tst;
+		left.retrieve(tst);
+			
+		VideoWriter leftSave("log/left.mp4",CV_FOURCC('X','2','6','4'),24,Size(320,240)), 
+			rightSave("log/right.mp4",CV_FOURCC('X','2','6','4'),24,Size(320,240)),
+			leftDSave("log/leftDetected.mp4",CV_FOURCC('X','2','6','4'),24,Size(320,240)), 
+			rightDSave("log/rightDetected.mp4",CV_FOURCC('X','2','6','4'),24,Size(320,240));
+		while(running){	
+		if(!left.isOpened() || !right.isOpened())
 			return;
 		left.grab();
 		right.grab();
@@ -54,10 +62,10 @@
 		if(!left.retrieve(leftPic)||
 			!right.retrieve(rightPic))
 			return;
-		*/
-		Mat leftPic,rightPic;
-		leftPic=rightPic=grass;
+		resize(leftPic,leftPic,Size(320,240));	
+		resize(rightPic,rightPic,Size(320,240));	
 		if(m_parameters->m_left.calibrated){
+		
 			stereomap SM = m_parameters->m_calib.SM;
 			remap(leftPic.clone(),leftPic,SM.map1x,SM.map1y,INTER_LINEAR,BORDER_CONSTANT,Scalar());
 		}
@@ -72,19 +80,28 @@
 		split(leftPic,m_parameters->m_left.channels);
 		split(rightPic,m_parameters->m_right.channels);
 		Mat blob,mask,lines;
-		m_algorithms->objectDetection(leftPic,blob,mask);
+		m_algorithms->objectDetection(leftPic.clone(),blob,mask);
 		cvtColor(blob,blob,CV_GRAY2BGR);
 		cvtColor(mask,mask,CV_GRAY2BGR);
-		m_algorithms->lineDetection(leftPic-blob,lines);
-		imshow("input", leftPic-blob);
-		imshow("tst",leftPic+mask+lines);
-		
+		m_algorithms->lineDetection(leftPic.clone(),lines);
+	
+		//imshow("input", leftPic-blob);
+		imshow("l",leftPic+mask+lines);
+		leftSave<<leftPic;
+		leftDSave<<leftPic+mask+lines;	
 	//m_algorithms->calib(calibration_parameters,leftPic,rightPic);
-		
+		m_algorithms->objectDetection(rightPic,blob,mask);
+		cvtColor(blob,blob,CV_GRAY2BGR);
+		cvtColor(mask,mask,CV_GRAY2BGR);
+		//m_algorithms->lineDetection(rightPic,lines);
+		imshow("r",rightPic+mask+lines);
+		rightDSave<<rightPic+mask+lines;	
+		rightSave<<rightPic;	
 			
 
 			
-			waitKey(30);
+			waitKey(41);
+		}
 	}
 	
 
