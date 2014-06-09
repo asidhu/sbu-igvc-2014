@@ -42,7 +42,7 @@
 		using namespace cv;
 		VideoCapture left=*L,
 			right = *R;
-		Mat grass = imread("grass4.jpg",CV_LOAD_IMAGE_COLOR);
+		Mat grass = imread("grass5.jpg",CV_LOAD_IMAGE_COLOR);
 		
 		
 		
@@ -76,8 +76,9 @@
 		cvtColor(blob,blob,CV_GRAY2BGR);
 		cvtColor(mask,mask,CV_GRAY2BGR);
 		m_algorithms->lineDetection(leftPic-blob,lines);
-
-		imshow("tst",mask+lines);
+		imshow("input", leftPic-blob);
+		imshow("tst",leftPic+mask+lines);
+		
 	//m_algorithms->calib(calibration_parameters,leftPic,rightPic);
 		
 			

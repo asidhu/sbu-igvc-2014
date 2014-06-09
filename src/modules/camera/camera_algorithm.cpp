@@ -131,6 +131,24 @@ bool sortLines(cv::Vec4i first, cv::Vec4i second){
 }
 
 
+cv::Mat thresh_test(cv::Mat& img, int b, int g, int r, int range){
+	using namespace cv;
+	Mat channels[3];
+	split(img,channels);	
+	threshold(channels[0],channels[0],b-range,255,THRESH_TOZERO);
+	threshold(channels[0],channels[0],b+range,255,THRESH_TOZERO_INV);
+	threshold(channels[0],channels[0],1,255,THRESH_BINARY);
+	threshold(channels[1],channels[1],g-100,255,THRESH_TOZERO);
+	threshold(channels[1],channels[1],g+100,255,THRESH_TOZERO_INV);
+	threshold(channels[1],channels[1],1,255,THRESH_BINARY);
+	threshold(channels[2],channels[2],r-range,255,THRESH_TOZERO);
+	threshold(channels[2],channels[2],r+range,255,THRESH_TOZERO_INV);
+	threshold(channels[2],channels[2],1,255,THRESH_BINARY);
+	bitwise_and(channels[0],channels[1],channels[0]);
+	bitwise_and(channels[0],channels[2],channels[0]);	
+	return channels[0];
+	
+}
 cv::Mat lineDetector(cv::Mat& img,  std::vector<cv::Mat>& debug_images){
 	using namespace cv;
 	Mat tst = img.clone();
@@ -142,17 +160,6 @@ cv::Mat lineDetector(cv::Mat& img,  std::vector<cv::Mat>& debug_images){
 	Mat blue = channels[0],green=channels[1],red=channels[2];
 	Mat edges = blue.clone();
 
-/*
-	Mat HSV;
-	cvtColor( img,HSV,CV_BGR2HSV);
-	split(HSV,channels);
-	blue = channels[2];
-	threshold(blue,blue,L.initial_thresh,255,THRESH_BINARY);
-	blue = blue > 200;
-	bitwise_and(HSV,Scalar(0,0,0),HSV,blue);
-	blue=HSV;
-	imshow("white",blue);
-*/	
 	threshold(blue,blue,130,255,0);
 	threshold(green,green,130,255,0);
 	threshold(red,red,130,255,0);
@@ -193,7 +200,7 @@ cv::Mat lineDetector(cv::Mat& img,  std::vector<cv::Mat>& debug_images){
 		cvtColor(skel,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
 	dilate(skel,skel,element);
-	Canny(skel,edges,20,150,3);
+	//Canny(skel,edges,20,150,3);
 		cvtColor(edges,tst,CV_GRAY2BGR);
 		debug_images.push_back(tst);
 	//GaussianBlur(edges,edges,Size(7,7),1.5,1.5);
@@ -251,69 +258,63 @@ void camera_algorithm::lineDetection(cv::Mat img, cv::Mat& lines){
 	using namespace cv;
 	std::vector<Mat> m_debug_imgs;
 	lines =lineDetector(img,m_debug_imgs);
-		//Mat m_display;
-		//paint_debug_images(m_debug_imgs,3,m_display);
-		//imshow("left",m_display);
+		Mat m_display;
+		paint_debug_images(m_debug_imgs,3,m_display);
+		imshow("left",m_display);
 }
 
 
-cv::Mat thresh_test(cv::Mat& img, int b, int g, int r, int range){
-	using namespace cv;
-	Mat channels[3];
-	split(img,channels);	
-	threshold(channels[0],channels[0],b-range,255,THRESH_TOZERO);
-	threshold(channels[0],channels[0],b+range,255,THRESH_TOZERO_INV);
-	threshold(channels[0],channels[0],1,255,THRESH_BINARY);
-	threshold(channels[1],channels[1],g-100,255,THRESH_TOZERO);
-	threshold(channels[1],channels[1],g+100,255,THRESH_TOZERO_INV);
-	threshold(channels[1],channels[1],1,255,THRESH_BINARY);
-	threshold(channels[2],channels[2],r-range,255,THRESH_TOZERO);
-	threshold(channels[2],channels[2],r+range,255,THRESH_TOZERO_INV);
-	threshold(channels[2],channels[2],1,255,THRESH_BINARY);
-	bitwise_and(channels[0],channels[1],channels[0]);
-	bitwise_and(channels[0],channels[2],channels[0]);	
-	return channels[0];
-	
-}
 
 
 void camera_algorithm::objectDetection(cv::Mat img, cv::Mat& blobs, cv::Mat& rect){
 	using namespace cv;
-	//find orange
-	Mat orange,white;
 	Mat tst;
 	std::vector<Mat> m_debugs;
 	m_debugs.push_back(img.clone());
+	Mat blur;
+	Mat green = thresh_test(img,100,100,100,100);
+	Mat findGreenBasket = thresh_test(img,30,60,40,35);
+	Mat mask;
+	cvtColor(green,tst,CV_GRAY2BGR);	
+	//m_debugs.push_back(tst.clone());
+	mask=tst;
+	cvtColor(findGreenBasket,tst,CV_GRAY2BGR);
+	//m_debugs.push_back(tst.clone());
+	mask = mask-tst;//include green basket
+	//m_debugs.push_back(mask.clone());
 	
-	medianBlur(img,img,9);
-	m_debugs.push_back(img);
-	orange = thresh_test(img,30,150,210,50);
-	white = thresh_test(img,255,255,255,50);
 
-	
-	Mat objs = white+orange;	
-	cvtColor(objs,tst,CV_GRAY2BGR);
-	m_debugs.push_back(tst.clone());
-
+	medianBlur(img,blur,5);
+	Mat sub = blur-img;
+	Mat grass = thresh_test(sub,10,10,10,5);
+	for(int i=2;i<40;i++){
+		grass = grass + thresh_test(sub,10+6*i,10+6*i,10+6*i,3);
+	}
 	Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
-	dilate(objs,objs,element,Point(-1,1),5);
-	cvtColor(objs,tst,CV_GRAY2BGR);
-	m_debugs.push_back(tst.clone());
-	blobs = objs.clone();
+	dilate(grass,grass,element,Point(-1,-1),3);
+	cvtColor(grass,tst,CV_GRAY2BGR);
+	sub = img-tst;
+	dilate(sub,sub,element,Point(-1,-1),1);
+	threshold(sub,sub,20,255,THRESH_BINARY);	
+	m_debugs.push_back(sub);
+	cvtColor(sub,sub,CV_BGR2GRAY);
+	erode(sub,sub,element,Point(-1,-1),6);
+	dilate(sub,sub,element,Point(-1,-1),6);
+	blobs = sub.clone();
+	Mat conts = blobs.clone();
 	std::vector<std::vector<Point> > contours;
   	std::vector<Vec4i> hierarchy;
-	findContours( objs, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+	findContours( conts, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 	std::vector<Rect> rects(contours.size());
 	std::vector<std::vector<Point> > contours_poly(contours.size());
-	rect=Mat(blobs.size(),blobs.type());
+	rect=Mat(blobs.size(),blobs.type(),Scalar(0));
 	for(int i=0;i<contours.size();i++){
 		approxPolyDP(Mat(contours[i]),contours_poly[i],3,true);
 		rects[i] = boundingRect(Mat(contours_poly[i]));
-		rectangle(rect,rects[i].tl(),rects[i].br(),Scalar(255),2,8,0);
+		rectangle(rect,rects[i].tl(),rects[i].br(),Scalar(255,255,255),2,8,0);
 	}
-	cvtColor(rect,tst,CV_GRAY2BGR);
-	m_debugs.push_back(tst.clone());
-	//Mat m_display;
-	//paint_debug_images(m_debugs,3,m_display);
-	//imshow("left_objD",m_display);
+	
+//	Mat m_display;
+//	paint_debug_images(m_debugs,4,m_display);
+//	imshow("left_objD",m_display);
 }
