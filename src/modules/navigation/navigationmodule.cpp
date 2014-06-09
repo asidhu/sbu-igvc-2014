@@ -176,7 +176,7 @@
          float tempHeading=evt->heading;
 	 
 	 tempHeading=toDegrees(tempHeading+2.58+M_PI);
-	 tempHeading+=7.52;         
+	 tempHeading+=187.52;         
          currentHeading=fmod(tempHeading,360.f);
          modified=true;
 	}
@@ -198,7 +198,9 @@
 		 modified=false;
                  float angleToWaypoint=angle(currentLat,currentLon,currentWaypoint->lat,currentWaypoint->lon);
                  angleToWaypoint*=-1;
-                 angleToWaypoint+=90;
+                 angleToWaypoint-=90;
+		 if (angleToWaypoint<0)
+		 {angleToWaypoint+=360;}
                  float difference=angleToWaypoint-currentHeading;
                  Logger::log(m_moduleid,LOGGER_INFO,"Angle to Waypoint: %f Heading: %f",angleToWaypoint,currentHeading);
 		Logger::log(m_moduleid,LOGGER_INFO,"LP:%f RP:%f",m_motors->left_power,m_motors->right_power);
